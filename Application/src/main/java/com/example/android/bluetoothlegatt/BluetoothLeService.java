@@ -33,6 +33,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.util.Log;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -259,6 +260,7 @@ public class BluetoothLeService extends Service {
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
         boolean res = device.createBond();
+
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;

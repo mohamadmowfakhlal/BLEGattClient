@@ -41,6 +41,7 @@ import android.widget.TextView;
 
 import com.google.android.things.bluetooth.BluetoothConfigManager;
 
+import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -81,6 +82,7 @@ public class DeviceControlActivity extends Activity {
     boolean numericcomparison = false ;
     boolean passkey = false ;
     boolean justworks = false ;
+    boolean pin = false;
     boolean plaintext = true ;
 
     // Code to manage Service lifecycle.
@@ -124,6 +126,10 @@ public class DeviceControlActivity extends Activity {
                 System.out.println("passkey");
                // mBluetoothLeService.getDevice() .setPin("dd".getBytes());
 
+            }else if(pairingtype == 4){
+                pin = true;
+                plaintext =false;
+                System.out.println("authentication using pin ");
             }
         }
 
@@ -134,7 +140,8 @@ public class DeviceControlActivity extends Activity {
                     BluetoothDevice.ERROR);
 
             if (bondstate == BluetoothDevice.BOND_BONDED) {
-                if (!numericcomparison || !passkey) {
+
+                if (!numericcomparison || !passkey || !pin) {
                     justworks = true;
                     plaintext = false;
                     System.out.println("just work");
@@ -169,7 +176,7 @@ public class DeviceControlActivity extends Activity {
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
-            }
+        }
         }
     };
 
@@ -272,9 +279,17 @@ public class DeviceControlActivity extends Activity {
         super.onDestroy();
         unbindService(mServiceConnection);
         unregisterReceiver(mPairingRequestReceiver);
+        unpairDevice(mBluetoothLeService.getDevice());
         mBluetoothLeService = null;
-    }
 
+    }
+    // Function to unpair from passed in device
+    private void unpairDevice(BluetoothDevice device) {
+        try {
+            Method m = device.getClass().getMethod("removeBond", (Class[]) null);
+            m.invoke(device, (Object[]) null);
+        } catch (Exception e) { Log.e(TAG, e.getMessage()); }
+    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.gatt_services, menu);
