@@ -31,10 +31,10 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.NonNull;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+//import android.support.annotation.NonNull;
+//import android.support.annotation.RequiresApi;
+//import android.support.v4.app.ActivityCompat;
+//import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -45,6 +45,11 @@ import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,6 +93,12 @@ public class DeviceScanActivity extends ListActivity {
             finish();
             return;
         }
+
+        //Bundle bundle = getArguments();
+        //bundle.getSerializable("Obj");
+        //Bundle bundle = new Bundle();
+        //bundle.getParcelableArrayList("list");
+        ArrayList<Device> myList = (ArrayList<Device>) getIntent().getSerializableExtra("mylist");
         mLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
     }
 

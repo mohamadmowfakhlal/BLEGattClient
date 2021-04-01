@@ -33,8 +33,10 @@ public class SampleGattAttributes {
         // Sample Characteristics.
         attributes.put(HEART_RATE_MEASUREMENT, "Heart Rate Measurement");
         attributes.put("00002a29-0000-1000-8000-00805f9b34fb", "Manufacturer Name String");
-        attributes.put("fb340001-8000-0080-0010-00000d180000", "autherization");
-        attributes.put("fb340004-8000-0080-0010-00000d180000", "autherization1");
+        attributes.put("fb340001-8000-0080-0010-00000d180000", "service");
+        attributes.put("fb340004-8000-0080-0010-00000d180000", "ServerNonces");
+        attributes.put("fb340003-8000-0080-0010-00000d180000", "ClientNonces");
+
     }
 
     public static String lookup(String uuid, String defaultName) {

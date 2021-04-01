@@ -29,7 +29,7 @@ import android.content.ServiceConnection;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
-import android.support.annotation.RequiresApi;
+//import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,15 +39,27 @@ import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
 
-import com.google.android.things.bluetooth.BluetoothConfigManager;
+//import com.google.android.things.bluetooth.BluetoothConfigManager;
+
+import androidx.annotation.RequiresApi;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
 
 import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 
@@ -84,7 +96,8 @@ public class DeviceControlActivity extends Activity {
     boolean justworks = false ;
     boolean pin = false;
     boolean plaintext = true ;
-
+    RequestQueue queue;
+    String serverURL = "http://ec2-18-185-6-210.eu-central-1.compute.amazonaws.com";
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -166,6 +179,7 @@ public class DeviceControlActivity extends Activity {
                 mConnected = true;
                 updateConnectionState(R.string.connected);
                 invalidateOptionsMenu();
+                establishSecureConnection();
             } else if (BluetoothLeService.ACTION_GATT_DISCONNECTED.equals(action)) {
                 mConnected = false;
                 updateConnectionState(R.string.disconnected);
@@ -174,11 +188,16 @@ public class DeviceControlActivity extends Activity {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                //establishSecureConnection();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
+               // establishSecureConnection();
         }
         }
+
     };
+
+
 
     // If a given GATT characteristic is selected, check for supported features.  This sample
     // demonstrates 'Read' and 'Notify' features.  See
@@ -193,26 +212,43 @@ public class DeviceControlActivity extends Activity {
                         final BluetoothGattCharacteristic characteristic =
                                 mGattCharacteristics.get(groupPosition).get(childPosition);
                         final int charaProp = characteristic.getProperties();
-                        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
-                            // If there is an active notification on a characteristic, clear
-                            // it first so it doesn't update the data field on the user interface.
-                            if (mNotifyCharacteristic != null) {
-                                mBluetoothLeService.setCharacteristicNotification(
-                                        mNotifyCharacteristic, false);
-                                mNotifyCharacteristic = null;
+
+                            if ((charaProp | BluetoothGattCharacteristic.PROPERTY_READ) > 0) {
+                                // If there is an active notification on a characteristic, clear
+                                // it first so it doesn't update the data field on the user interface.
+                                if (mNotifyCharacteristic != null) {
+                                    mBluetoothLeService.setCharacteristicNotification(
+                                            mNotifyCharacteristic, false);
+                                    mNotifyCharacteristic = null;
+                                }
+                                mBluetoothLeService.readCharacteristic(characteristic);
                             }
-                            mBluetoothLeService.readCharacteristic(characteristic);
-                        }
-                        if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
-                            mNotifyCharacteristic = characteristic;
-                            mBluetoothLeService.setCharacteristicNotification(
-                                    characteristic, true);
-                        }
-                        return true;
+                            if ((charaProp | BluetoothGattCharacteristic.PROPERTY_NOTIFY) > 0) {
+                                mNotifyCharacteristic = characteristic;
+                                mBluetoothLeService.setCharacteristicNotification(
+                                        characteristic, true);
+                            }
+
+
+
+                            return true;
                     }
                     return false;
                 }
     };
+
+    private boolean isCharacteristicWriteable(BluetoothGattCharacteristic characteristic) {
+        return (characteristic.getProperties() & (BluetoothGattCharacteristic.PROPERTY_WRITE
+                | BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE)) != 0;
+    }
+
+    private boolean isCharacteristicNotifiable(BluetoothGattCharacteristic characteristic) {
+        return (characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_NOTIFY) != 0;
+    }
+
+    private boolean isCharacteristicReadable(BluetoothGattCharacteristic characteristic) {
+        return ((characteristic.getProperties() & BluetoothGattCharacteristic.PROPERTY_READ) != 0);
+    }
 
     private void clearUI() {
         //mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
@@ -254,7 +290,6 @@ public class DeviceControlActivity extends Activity {
         registerReceiver (mPairingRequestReceiver ,
                 pairingRequestFilter );
         pairingRequestFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY );
-
     }
 
     @Override
@@ -410,7 +445,7 @@ public class DeviceControlActivity extends Activity {
                 invalidateOptionsMenu();
                 clearUI();
             }
-            mBluetoothLeService.readCustomCharacteristic();
+            //mBluetoothLeService.readCustomCharacteristic();
             TimeUnit.SECONDS.sleep(1);
             //byte[] CDRIVES = hexStringToByteArray("e04fd020ea3a6910a2d808002b30309d");
 
@@ -423,7 +458,7 @@ public class DeviceControlActivity extends Activity {
 
             byte [] response = aes.encrypt(mBluetoothLeService.data,keyBytes);
             if(response != null){
-            mBluetoothLeService.writeCustomCharacteristic(response);
+            //mBluetoothLeService.writeCustomCharacteristic(response);
             numberofattempt = 0;
             }
             else{
@@ -432,10 +467,40 @@ public class DeviceControlActivity extends Activity {
             }
         }
     }
+    public void establishSecureConnection() {
+        byte[] Cnonce = new byte[16];
+        new SecureRandom().nextBytes(Cnonce);
+        //String HexCnonce = convertBytesToHex(Cnonce);
+        System.out.println("Client nonces"+Cnonce.toString());
 
+        mBluetoothLeService.writeCustomCharacteristic(Cnonce,UUID.fromString("fb340003-8000-0080-0010-00000d180000"));
+        // mBluetoothLeService.readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+        //mBluetoothLeService.connect();
+
+    }
+    private Response.Listener<Nonces> createMyReqSuccessListener() {
+
+        return new Response.Listener<Nonces>() {
+            @Override
+            public void onResponse(Nonces response) {
+                System.out.println("Hello world" +response.getCNonce() + response.getSNonce());
+            }
+        };
+    }
+
+    private Response.ErrorListener createMyReqErrorListener() {
+        return new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                System.out.println("Error ");
+
+                // Do whatever you want to do with error.getMessage();
+            }
+        };
+    }
     public void onClickRead(View v){
         if(mBluetoothLeService != null) {
-            mBluetoothLeService.readCustomCharacteristic();
+           // mBluetoothLeService.readCustomCharacteristic();
         }
     }
 

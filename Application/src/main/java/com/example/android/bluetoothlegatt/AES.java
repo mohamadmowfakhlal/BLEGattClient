@@ -20,17 +20,17 @@ public class AES {
 		return crypted;
 	}
 
-	public static String decrypt(byte[] input, byte[] key) {
+	public static byte[] decrypt(byte[] input, byte[] key) {
 		byte[] output = null;
 		try {
 			SecretKeySpec skey = new SecretKeySpec(key, "AES");
-			Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+			Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
 			cipher.init(Cipher.DECRYPT_MODE, skey);
 			output = cipher.doFinal(input);
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
-		return new String(output);
+		return  output;
 	}
 
 

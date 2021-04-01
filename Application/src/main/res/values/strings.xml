@@ -34,4 +34,35 @@
     <string name="menu_scan">Scan</string>
     <string name="menu_stop">Stop</string>
     <string name="no_key">helloworldsecuri</string>
+    <string name="username">username</string>
+    <string name="password">password</string>
+
+
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="scan_fragment_label">scan Fragment</string>
+    <string name="previous">Previous</string>
+
+
+    <string name="random_heading">List of Devices that the user has a permission to access</string>
+    <string name="toast_button_text">Toast</string>
+    <string name="random_button_text">Random</string>
+    <string name="connect">connect</string>
+
+    <string-array name="array_technology">
+        <item>Android</item>
+        <item>Java</item>
+        <item>Php</item>
+        <item>Hadoop</item>
+        <item>Sap</item>
+        <item>Python</item>
+        <item>Ajax</item>
+        <item>C++</item>
+        <item>Ruby</item>
+        <item>Rails</item>
+        <item>.Net</item>
+        <item>Perl</item>
+    </string-array>
 </resources>

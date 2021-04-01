@@ -1,0 +1,43 @@
+{
+    "logs": [
+        {
+            "outputFile": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\build\\intermediates\\incremental\\mergeDebugResources\\merged.dir\\values-v11\\values-v11.xml",
+            "map": [
+                {
+                    "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\values-v11\\template-styles.xml",
+                    "from": {
+                        "startLines": "19",
+                        "startColumns": "4",
+                        "startOffsets": "650",
+                        "endColumns": "65",
+                        "endOffsets": "711"
+                    },
+                    "to": {
+                        "startLines": "8",
+                        "startColumns": "4",
+                        "startOffsets": "353",
+                        "endColumns": "64",
+                        "endOffsets": "413"
+                    }
+                },
+                {
+                    "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\values-v11\\colors.xml",
+                    "from": {
+                        "startLines": "6,4,2,3,5,7",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "256,157,57,105,204,308",
+                        "endColumns": "50,45,46,50,50,51",
+                        "endOffsets": "302,198,99,151,250,355"
+                    },
+                    "to": {
+                        "startLines": "2,3,4,5,6,7",
+                        "startColumns": "4,4,4,4,4,4",
+                        "startOffsets": "55,106,152,199,250,301",
+                        "endColumns": "50,45,46,50,50,51",
+                        "endOffsets": "101,147,194,245,296,348"
+                    }
+                }
+            ]
+        }
+    ]
+}
