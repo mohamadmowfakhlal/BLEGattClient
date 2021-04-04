@@ -29,7 +29,9 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -49,10 +51,19 @@ import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Queue;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.TimeUnit;
+
+import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
+import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ;
 
 /**
  * Service for managing connection and data communication with a GATT server hosted on a
@@ -70,6 +81,7 @@ public class BluetoothLeService extends Service {
     private static final int STATE_DISCONNECTED = 0;
     private static final int STATE_CONNECTING = 1;
     private static final int STATE_CONNECTED = 2;
+    private int nrTries;
 
     public final static String ACTION_GATT_CONNECTED =
             "com.example.bluetooth.le.ACTION_GATT_CONNECTED";
@@ -83,11 +95,19 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.EXTRA_DATA";
     public final static UUID UUID_HEART_RATE_MEASUREMENT =
             UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-    String serverURL = "http://ec2-18-185-6-210.eu-central-1.compute.amazonaws.com";
+    String serverURL = "http://ec2-52-59-255-148.eu-central-1.compute.amazonaws.com";
     RequestQueue queue;
     private byte[] orginalCnonce;
     Nonces nonce = new Nonces();
+    AES aes = new AES();
     boolean verifyserver = false;
+    private byte[] sessionKey;
+    private final Queue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
+    private boolean commandQueueBusy;
+    private boolean isRetrying;
+    Handler bleHandler = new Handler(Looper.getMainLooper());
+
+
     public static BluetoothDevice getDevice() {
         return device;
     }
@@ -97,6 +117,9 @@ public class BluetoothLeService extends Service {
     // Implements callback methods for GATT events that the app cares about.  For example,
     // connection change and services discovered.
     private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
+        private byte[] serverNonce= null;
+        private boolean clientNonce= false;
+
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
             String intentAction;
@@ -119,8 +142,8 @@ public class BluetoothLeService extends Service {
 
         @Override
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+            if (status == GATT_SUCCESS) {
+               broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -130,41 +153,52 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
 
-            //if(characteristic.getUuid().equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000")))
-               // readCustomCharacteristic(characteristic.getUuid());
-            //broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-            if(!characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000")
-            ))
-            readCustomCharacteristic(characteristic.getUuid());
 
+            System.out.println("before reading");
+            if(!characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000")
+            )) {
+                //readCustomCharacteristic(characteristic.getUuid());
+                System.out.println("after reading");
+
+                //readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+                //connect(nonce);
+
+            }else if(characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000"))){
+             //   readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+                System.out.println("after reading"+characteristic.getValue());
+
+            }
+            // Perform some checks on the status field
+            if (status != GATT_SUCCESS) {
+                Log.e(TAG, String.format(Locale.ENGLISH,"ERROR: write failed for characteristic: %s, status %d", characteristic.getUuid(), status));
+                completedCommand();
+                return;
+            }
+
+            // Characteristic has been read so processes it
+
+            // We done, complete the command
+            completedCommand();
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt,
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
-            if (status == BluetoothGatt.GATT_SUCCESS) {
-                //AES aesinstance = new AES();
-
-                //here print the values of nonces
-                if (characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000"))) {
-                    //byte[] decrypteddnonce = aesinstance.decrypt(characteristic.getValue(), "1111222233334444".getBytes());
-
-                    //System.out.println("server nonce values" + characteristic.getValue() + decrypteddnonce.toString());
+            if (status == GATT_SUCCESS) {
+                 if (characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000"))) {
                     nonce.setSNonce(characteristic.getValue());
-                    connect(nonce);
-
-                }
+                     connect(nonce);
+                 }
                 if (characteristic.getUuid().equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000"))) {
-                    //byte[] encryptednonce = aesinstance.decrypt(characteristic.getValue(), "1111222233334444".getBytes());
-                    //if (Arrays.equals(orginalCnonce, encryptednonce))
-                      //  System.out.println("Hello the server is real one");
                     System.out.println("Recieved Cnonce" + characteristic.getValue().toString());
                     nonce.setCNonce(characteristic.getValue());
-                    readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+                    clientNonce = true;
+                }else  if (characteristic.getUuid().equals(UUID.fromString("fb340006-8000-0080-0010-00000d180000"))) {
+                    if(Arrays.equals(serverNonce, aes.decrypt(characteristic.getValue(),sessionKey)))
+                        System.out.println("correct session and protection against reply attack");
                 }
-                //connectserverfordecryption();
-                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
+                  broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             } else if (status == BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION) {
                 // This is where the tricky part comes
                 if (gatt.getDevice().getBondState() == BluetoothDevice.BOND_NONE) {
@@ -176,6 +210,18 @@ public class BluetoothLeService extends Service {
             } else if (status == BluetoothGatt.GATT_INSUFFICIENT_ENCRYPTION) {
 
             }
+
+            // Perform some checks on the status field
+            if (status != GATT_SUCCESS) {
+                Log.e(TAG, String.format(Locale.ENGLISH,"ERROR: Read failed for characteristic: %s, status %d", characteristic.getUuid(), status));
+                completedCommand();
+                return;
+            }
+
+            // Characteristic has been read so processes it
+
+            // We done, complete the command
+            completedCommand();
         }
 
 
@@ -199,16 +245,38 @@ public class BluetoothLeService extends Service {
                         @Override
                         public void onResponse(JSONObject response) {
                             try {
+                                //client nonce
                                 String clientDecryptedNonce = (String) response.get("CNonce");
                                 byte[] clientDecryptedNonceBytes= clientDecryptedNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-
+                                //server nonce
                                 String serverDecryptedCNonce = (String) response.get("SNonce");
                                 byte[] serverDecryptedNonceBytes= serverDecryptedCNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                //session key
+                                String ReceivedSessionKey = (String) response.get("sessionKey");
+                                sessionKey = ReceivedSessionKey.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                //encrypted session Key that will be sent to gatt server.
+                                String encryptedSessionKey = (String) response.get("encryptedSessionKey");
+                                byte[] encryptedSessionKeyBytes= encryptedSessionKey.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+
+                                //server nonce
+                                String ReceivedServerNonce = (String) response.get("serverNonce");
+                                serverNonce = ReceivedServerNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                //encrypted server nonce that will be sent to gatt server.
+                                String encryptedServerNonce = (String) response.get("encryptedServerNonce");
+                                byte[] encryptedServerNonceBytes= encryptedServerNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 
                                 if (Arrays.equals(orginalCnonce, clientDecryptedNonceBytes)) {
                                     System.out.println("client are sure about the server is real one");
-                                    verifyserver = true;
+                                    verifyserver = true;                                    //mBluetoothGatt.disconnect();
+                                    //byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length];
+                                    //System.arraycopy(serverDecryptedNonceBytes, 0, concatenatednonces, 0, serverDecryptedNonceBytes.length);
+                                    //System.arraycopy( encryptedSessionKeyBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length,  encryptedSessionKeyBytes.length);
                                     writeCustomCharacteristic(serverDecryptedNonceBytes,UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(encryptedSessionKeyBytes,UUID.fromString("fb340005-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(encryptedServerNonceBytes,UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
+                                    readCustomCharacteristic(UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
+                                }else{
+                                    mBluetoothGatt.disconnect();
                                 }
 
                                 Log.d(TAG, response.get("CNonce") + " i am queen");
@@ -239,87 +307,12 @@ public class BluetoothLeService extends Service {
             queue = Volley.newRequestQueue(getApplicationContext());
 
             queue.add(jsonObjReq);
-            //if(verifyserver)
-            //writeCustomCharacteristic(serverDecryptedNonceBytes,UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-
-        }
-
-        private void connectserverfordecryption() {
-            queue = Volley.newRequestQueue(getApplicationContext());
-            nonce.setMAC("1922222220");
-            String token = serverURL + "/token";
-            GsonRequest<Nonc[]> myReq = null;
-            try {
-                myReq = new GsonRequest<Nonc[]>(Request.Method.POST, nonce.toJSON(),
-                        token,
-                        Nonc[].class, getHeaders(),
-                        createMyReqSuccessListener(),
-                        createMyReqErrorListener());
-            } catch (JSONException | AuthFailureError e) {
-                e.printStackTrace();
-            }
-            queue.add(myReq);
-
-        }
-
-        @Override
-        public void onCharacteristicChanged(BluetoothGatt gatt,
-                                            BluetoothGattCharacteristic characteristic) {
-            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
-        }
-
-        @Override
-        public void onMtuChanged (BluetoothGatt gatt,
-                                  int mtu,
-                                  int status){
-        System.out.println("new mtu size"+mtu);
         }
 
     };
-    public Map<String, String> getHeaders() throws AuthFailureError {
-        HashMap<String, String> headers = new HashMap<String, String>();
-        headers.put("Content-Type", "application/json; charset=utf-8");
-        return headers;
-    }
-    private Response.Listener<Nonc[]> createMyReqSuccessListener() {
 
-        return new Response.Listener<Nonc[]>() {
-            @Override
-            public void onResponse(Nonc[] response) {
-                Nonc[] nonce = response;
 
-                //System.out.println("Hello world" +response.getCNonce() + response.getSNonce());
-                //if(CNonce.equals(response.getCNonce()))
-                //System.out.println("gatt client authenticate gatt server");
 
-            }
-        };
-    }
-
-    private Response.ErrorListener createMyReqErrorListener() {
-        return new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println("Error ");
-                NetworkResponse response = error.networkResponse;
-                if (error instanceof ServerError && response != null) {
-                    try {
-                        String res = new String(response.data,
-                                HttpHeaderParser.parseCharset(response.headers, "utf-8"));
-                        // Now you can use any deserializer to make sense of data
-                        JSONObject obj = new JSONObject(res);
-                    } catch (UnsupportedEncodingException e1) {
-                        // Couldn't properly decode data to string
-                        e1.printStackTrace();
-                    } catch (JSONException e2) {
-                        // returned data is not JSONObject?
-                        e2.printStackTrace();
-                    }
-                }
-                // Do whatever you want to do with error.getMessage();
-            }
-        };
-    }
     private void broadcastUpdate(final String action) {
         final Intent intent = new Intent(action);
         sendBroadcast(intent);
@@ -468,14 +461,13 @@ public class BluetoothLeService extends Service {
      *
      * @param characteristic The characteristic to read from.
      */
-    public void readCharacteristic(BluetoothGattCharacteristic characteristic) {
+    public void readCharacteristic1(BluetoothGattCharacteristic characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
 
-        boolean readed = mBluetoothGatt.readCharacteristic(characteristic);
-        int res = device.getBondState();
+     mBluetoothGatt.readCharacteristic(characteristic);
     }
 
 
@@ -492,7 +484,7 @@ public class BluetoothLeService extends Service {
             return;
         }
 
-        boolean written = mBluetoothGatt.writeCharacteristic(characteristic);
+     mBluetoothGatt.writeCharacteristic(characteristic);
 
     }
 
@@ -542,32 +534,139 @@ public class BluetoothLeService extends Service {
         }
         /*get the read characteristic from the service*/
         BluetoothGattCharacteristic mReadCharacteristic = mCustomService.getCharacteristic(uuid);
-        if(mBluetoothGatt.readCharacteristic(mReadCharacteristic) == false){
+        if(readCharacteristic(mReadCharacteristic) == false){
             Log.w(TAG, "Failed to read characteristic");
         }
 
     }
+    public boolean readCharacteristic(final BluetoothGattCharacteristic characteristic) {
+        if(mBluetoothGatt == null) {
+            Log.e(TAG, "ERROR: Gatt is 'null', ignoring read request");
+            return false;
+        }
 
+        // Check if characteristic is valid
+        if(characteristic == null) {
+            Log.e(TAG, "ERROR: Characteristic is 'null', ignoring read request");
+            return false;
+        }
+
+        // Check if this characteristic actually has READ property
+        if((characteristic.getProperties() & PROPERTY_READ) == 0 ) {
+            Log.e(TAG, "ERROR: Characteristic cannot be read");
+            return false;
+        }
+
+        // Enqueue the read command now that all checks have been passed
+        boolean result = commandQueue.add(new Runnable() {
+
+            @Override
+            public void run() {
+                if(!mBluetoothGatt.readCharacteristic(characteristic)) {
+                    Log.e(TAG, String.format("ERROR: readCharacteristic failed for characteristic: %s", characteristic.getUuid()));
+                    completedCommand();
+                } else {
+                    Log.d(TAG, String.format("reading characteristic <%s>", characteristic.getUuid()));
+                    nrTries++;
+                }
+            }
+        });
+
+        if(result) {
+            nextCommand();
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue read characteristic command");
+        }
+        return result;
+    }
+
+    private void nextCommand() {
+        // If there is still a command being executed then bail out
+        if(commandQueueBusy) {
+            return;
+        }
+
+        // Check if we still have a valid gatt object
+        if (mBluetoothGatt == null) {
+            Log.e(TAG, String.format("ERROR: GATT is 'null' for peripheral '%s', clearing command queue"));
+            commandQueue.clear();
+            commandQueueBusy = false;
+            return;
+        }
+
+        // Execute the next command in the queue
+        if (commandQueue.size() > 0) {
+            final Runnable bluetoothCommand = commandQueue.peek();
+            commandQueueBusy = true;
+            nrTries = 0;
+
+                bleHandler.post(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        bluetoothCommand.run();
+                    } catch (Exception ex) {
+                        Log.e(TAG, String.format("ERROR: Command exception for device '%s'"), ex);
+                    }
+                }
+            });
+        }
+    }
+    private void completedCommand() {
+        commandQueueBusy = false;
+        isRetrying = false;
+        commandQueue.poll();
+        nextCommand();
+    }
     public void writeCustomCharacteristic(byte[] value,UUID uuid) {
+        System.out.println("Client nonces........ttt........");
+
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
+        System.out.println("Client nonces........ela........");
+
         /*check if the service is available on the device*/
         BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("fb340001-8000-0080-0010-00000d180000"));
+        System.out.println("Client nonces........ali........");
+
         if(mCustomService == null){
             Log.w(TAG, "Custom BLE Service not found");
             return;
         }
         /*get the read characteristic from the service*/
-        BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
+        final  BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
         mWriteCharacteristic.setValue(value);
+        //mWriteCharacteristic.setWriteType(2);
         if(uuid.equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000"))) {
             orginalCnonce = value;
+            //mWriteCharacteristic.setWriteType(1);
             System.out.println("Cnonce" + orginalCnonce.toString());
         }
-        if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
-            Log.w(TAG, "Failed to write characteristic");
+        System.out.println("Client nonces........................kkkkkkkkk......................................");
+        //if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
+          // Log.w(TAG, "Failed to write characteristic");
+        //}
+        // Enqueue the write command now that all checks have been passed
+        boolean result = commandQueue.add(new Runnable() {
+
+            @Override
+            public void run() {
+                if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)) {
+                    Log.e(TAG, String.format("ERROR: readCharacteristic failed for characteristic: %s", mWriteCharacteristic.getUuid()));
+                    completedCommand();
+                } else {
+                    Log.d(TAG, String.format("reading characteristic <%s>", mWriteCharacteristic.getUuid()));
+                    nrTries++;
+                }
+            }
+        });
+
+        if(result) {
+            nextCommand();
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue read characteristic command");
         }
     }
 }

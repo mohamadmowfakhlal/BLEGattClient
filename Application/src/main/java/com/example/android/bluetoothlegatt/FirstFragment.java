@@ -1,12 +1,9 @@
 package com.example.android.bluetoothlegatt;
 
-import android.app.Activity;
 import android.content.Intent;
 
 import android.os.Build;
 import android.os.Bundle;
-
-import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,7 +28,7 @@ public class FirstFragment extends Fragment {
     EditText username;
     EditText password;
     Toast myToast;
-    String serverURL = "http://ec2-18-185-6-210.eu-central-1.compute.amazonaws.com";
+    String serverURL = "http://ec2-52-59-255-148.eu-central-1.compute.amazonaws.com";
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container,
