@@ -4,6 +4,7 @@ import android.content.Intent;
 
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,21 +15,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.fragment.app.Fragment;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import org.json.JSONException;
+import org.json.JSONObject;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FirstFragment extends Fragment {
     EditText username;
     EditText password;
     Toast myToast;
-    String serverURL = "http://ec2-52-59-255-148.eu-central-1.compute.amazonaws.com";
+    String serverURL = "http://ec2-18-194-15-165.eu-central-1.compute.amazonaws.com";
+    String user_name;
     @Override
     public View onCreateView(
             LayoutInflater inflater, ViewGroup container,
@@ -47,61 +53,68 @@ public class FirstFragment extends Fragment {
 
     public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        view.findViewById(R.id.count_button).setOnClickListener(new View.OnClickListener() {
+        view.findViewById(R.id.test_button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String user_name = username.getText().toString();
+                user_name = username.getText().toString();
                 String pass_word = password.getText().toString();
                 // Instantiate the RequestQueue.
                 RequestQueue queue =  Volley.newRequestQueue(getActivity().getApplicationContext());
                     // Add the request to the RequestQueue.
                     //queue.add(stringRequest);*/
-                String authorizationURL =serverURL+"/checkauthorizatation/"+ user_name +"?password="+pass_word+ "";
-                GsonRequest<Device[]> myReq = new GsonRequest<Device[]>(Request.Method.GET,null,
-                        authorizationURL,
-                        Device[].class,null,
-                        createMyReqSuccessListener(),
-                        createMyReqErrorListener());
-                queue.add(myReq);
+                JSONObject js = new JSONObject();
+                try {
 
+                    js.put("password", pass_word);
+                    js.put("username", user_name);
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+                // Make request for JSONObject
+                JsonObjectRequest jsonObjReq = new JsonObjectRequest(
+                        Request.Method.POST, serverURL+"/checkauthentication/", js,
+                        new Response.Listener<JSONObject>() {
+                            @Override
+                            public void onResponse(JSONObject response) {
+                                if(response!=null) {
+                                    try {
+                                        if(response.get("session") != null){
+                                            Intent intent = new Intent(getActivity(), DeviceScanActivity.class);
+                                            intent.putExtra("username", user_name);
+                                            startActivity(intent);
+                                        }else{
+                                            myToast = Toast.makeText(getActivity(), "failed to login !", Toast.LENGTH_SHORT);
+                                            myToast.show();
+                                        }
+                                    } catch (JSONException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                        }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        //VolleyLog.d(TAG, "Error: " + error.getMessage());
+                    }
+                }) {
+
+                    /**
+                     * Passing some request headers
+                     */
+                    @Override
+                    public Map<String, String> getHeaders() throws AuthFailureError {
+                        HashMap<String, String> headers = new HashMap<String, String>();
+                        headers.put("Content-Type", "application/json; charset=utf-8");
+                        return headers;
+                    }
+
+                };
+                queue.add(jsonObjReq);
             }
         });
-
     }
 
 
-
-
-    private Response.Listener<Device[]> createMyReqSuccessListener() {
-
-        return new Response.Listener<Device[]>() {
-            @RequiresApi(api = Build.VERSION_CODES.N)
-            @Override
-            public void onResponse(Device[] response) {
-                List<Device> Devices = Arrays.asList(response);
-                ((MainActivity) getActivity()).setObjectList( Devices);
-                boolean empty = Devices.isEmpty();
-                if(!empty){
-                    Intent intent = new Intent(getActivity(), DeviceScanActivity.class);
-                    ArrayList<Device> names = new ArrayList<>(Devices);
-                    intent.putExtra("mylist", names);
-                    startActivity(intent);
-                      //NavHostFragment.findNavController(FirstFragment.this).navigate( FirstFragmentDirections.actionFirstFragmentToScanFragment());
-                }else{
-                    myToast = Toast.makeText(getActivity(), "failed to login !", Toast.LENGTH_SHORT);
-                    myToast.show();
-                }
-
-            }
-        };
-    }
-    private Response.ErrorListener createMyReqErrorListener() {
-        return new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println("Error ");
-            }
-        };
-    }
 }
 

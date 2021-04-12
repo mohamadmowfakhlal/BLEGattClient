@@ -34,6 +34,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
@@ -43,24 +44,14 @@ import android.widget.TextView;
 
 import androidx.annotation.RequiresApi;
 
-import com.android.volley.Request;
 import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.Volley;
-
-import org.json.JSONException;
 
 import java.lang.reflect.Method;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -74,13 +65,18 @@ public class DeviceControlActivity extends Activity {
 
     public static final String EXTRAS_DEVICE_NAME = "DEVICE_NAME";
     public static final String EXTRAS_DEVICE_ADDRESS = "DEVICE_ADDRESS";
+    public static final String USER_NAME = "USER_NAME";
+
     private String data = null;
     private int numberofattempt = 0;
     private TextView mConnectionState;
     private TextView mDataField;
+    private Button writeButton;
+
     private EditText mkeyField;
     private String mDeviceName;
     private String mDeviceAddress;
+    private String username;
     private ExpandableListView mGattServicesList;
     private BluetoothLeService mBluetoothLeService;
     private ArrayList<ArrayList<BluetoothGattCharacteristic>> mGattCharacteristics =
@@ -96,8 +92,6 @@ public class DeviceControlActivity extends Activity {
     boolean justworks = false ;
     boolean pin = false;
     boolean plaintext = true ;
-    RequestQueue queue;
-    String serverURL = "http://ec2-52-59-255-148.eu-central-1.compute.amazonaws.com";
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -117,6 +111,7 @@ public class DeviceControlActivity extends Activity {
             mBluetoothLeService = null;
         }
     };
+
     private final BroadcastReceiver mPairingRequestReceiver = new BroadcastReceiver() {
         @Override
     public void onReceive(Context context, Intent intent) {
@@ -249,12 +244,20 @@ public class DeviceControlActivity extends Activity {
         final Intent intent = getIntent();
         mDeviceName = intent.getStringExtra(EXTRAS_DEVICE_NAME);
         mDeviceAddress = intent.getStringExtra(EXTRAS_DEVICE_ADDRESS);
+        username = intent.getStringExtra(USER_NAME);
         mGattServicesList = (ExpandableListView) findViewById(R.id.gatt_services_list);
         mGattServicesList.setOnChildClickListener(servicesListClickListner);
         // Sets up UI references.
 
         mDataField = (TextView) findViewById(R.id.data_value);
+        writeButton = (Button) findViewById(R.id.test_button);
+        writeButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // your handler code here
+                mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("realData"));
 
+            }
+        });
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
@@ -424,7 +427,7 @@ public class DeviceControlActivity extends Activity {
                 clearUI();
             }
             //mBluetoothLeService.readCustomCharacteristic();
-            TimeUnit.SECONDS.sleep(1);
+            //TimeUnit.SECONDS.sleep(1);
             //byte[] CDRIVES = hexStringToByteArray("e04fd020ea3a6910a2d808002b30309d");
 
             //byte[] bytes = new byte[16];
@@ -434,15 +437,15 @@ public class DeviceControlActivity extends Activity {
             byte[] keyBytes = key.getBytes("UTF-8");
             AES aes = new AES();
 
-            byte [] response = aes.encrypt(mBluetoothLeService.data,keyBytes);
-            if(response != null){
-            //mBluetoothLeService.writeCustomCharacteristic(response);
+           // byte [] response = aes.encrypt(mBluetoothLeService.data,sessionKey);
+            //if(response != null){
+            mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(),SampleGattAttributes.getUUIDForName("realData"));
             numberofattempt = 0;
-            }
-            else{
-                mkeyField.setText("wrong password");
-                numberofattempt += 1;
-            }
+           // }
+            //else{
+              //  mkeyField.setText("wrong password");
+               // numberofattempt += 1;
+            //}
         }
     }
 
@@ -456,16 +459,12 @@ public class DeviceControlActivity extends Activity {
         byte[] Cnonce = new byte[16];
         new SecureRandom().nextBytes(Cnonce);
         System.out.println("Client nonces"+Cnonce.toString());
-
-        mBluetoothLeService.writeCustomCharacteristic(Cnonce,UUID.fromString("fb340003-8000-0080-0010-00000d180000"));
-        mBluetoothLeService.readCustomCharacteristic(UUID.fromString("fb340003-8000-0080-0010-00000d180000"));
-        mBluetoothLeService.readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-
+        mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonces"));
+        mBluetoothLeService.readCustomCharacteristic(SampleGattAttributes.getUUIDForName("clientNonces"));
+        mBluetoothLeService.readCustomCharacteristic(SampleGattAttributes.getUUIDForName("serverNonces"));
+        mBluetoothLeService.setUsername(username);
         //mBluetoothLeService.connectRestServer();
         System.out.println("Client nonces..............hhhhhhhhhhh...............");
-
-        //mBluetoothLeService.readCustomCharacteristic(UUID.fromString("fb340003-8000-0080-0010-00000d180000"));
-        //mBluetoothLeService.readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
     }
 }
 

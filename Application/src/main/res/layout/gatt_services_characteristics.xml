@@ -73,6 +73,13 @@
             android:text="@string/no_data"
             android:textSize="18sp" />
 
+        <Button
+            android:id="@+id/test_button"
+            android:layout_width="74dp"
+            android:layout_height="match_parent"
+            android:text="test writing"
+            android:textSize="18sp" />
+
     </LinearLayout>
     <ExpandableListView android:id="@+id/gatt_services_list"
             android:layout_width="match_parent"

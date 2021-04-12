@@ -16,12 +16,12 @@
         "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher_round.png"
     },
     {
-        "merged": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\build\\intermediates\\res\\merged\\debug\\mipmap-anydpi-v26_ic_launcher.xml.flat",
-        "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher.xml"
-    },
-    {
         "merged": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\build\\intermediates\\res\\merged\\debug\\menu_gatt_services.xml.flat",
         "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\menu\\gatt_services.xml"
+    },
+    {
+        "merged": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\build\\intermediates\\res\\merged\\debug\\mipmap-anydpi-v26_ic_launcher.xml.flat",
+        "source": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\src\\main\\res\\mipmap-anydpi-v26\\ic_launcher.xml"
     },
     {
         "merged": "C:\\Users\\Min\\AndroidStudioProjects\\BluetoothLeGatt\\Application\\build\\intermediates\\res\\merged\\debug\\mipmap-xxxhdpi_ic_launcher.png.flat",

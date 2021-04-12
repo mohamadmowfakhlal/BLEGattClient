@@ -33,6 +33,7 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -93,14 +94,21 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
-    public final static UUID UUID_HEART_RATE_MEASUREMENT =
-            UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-    String serverURL = "http://ec2-52-59-255-148.eu-central-1.compute.amazonaws.com";
+    //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
+    String serverURL = "http://ec2-18-194-15-165.eu-central-1.compute.amazonaws.com";
     RequestQueue queue;
     private byte[] orginalCnonce;
     Nonces nonce = new Nonces();
     AES aes = new AES();
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    String username;
     boolean verifyserver = false;
+    Toast myToast;
+
     private byte[] sessionKey;
     private final Queue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
     private boolean commandQueueBusy;
@@ -232,7 +240,8 @@ public class BluetoothLeService extends Service {
             try {
                 js.put("SNonce",new String(nonce.SNonce,java.nio.charset.StandardCharsets.ISO_8859_1) );
                 js.put("CNonce", new String(nonce.CNonce,java.nio.charset.StandardCharsets.ISO_8859_1));
-                js.put("MAC", "1922222220");
+                js.put("deviceID", "1922222220");
+                js.put("username", username);
 
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -245,25 +254,26 @@ public class BluetoothLeService extends Service {
                         @Override
                         public void onResponse(JSONObject response) {
                             try {
+                                if(response!=null){
                                 //client nonce
                                 String clientDecryptedNonce = (String) response.get("CNonce");
-                                byte[] clientDecryptedNonceBytes= clientDecryptedNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                byte[] clientDecryptedNonceBytes = clientDecryptedNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                                 //server nonce
                                 String serverDecryptedCNonce = (String) response.get("SNonce");
-                                byte[] serverDecryptedNonceBytes= serverDecryptedCNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                byte[] serverDecryptedNonceBytes = serverDecryptedCNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                                 //session key
                                 String ReceivedSessionKey = (String) response.get("sessionKey");
                                 sessionKey = ReceivedSessionKey.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                                 //encrypted session Key that will be sent to gatt server.
                                 String encryptedSessionKey = (String) response.get("encryptedSessionKey");
-                                byte[] encryptedSessionKeyBytes= encryptedSessionKey.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                byte[] encryptedSessionKeyBytes = encryptedSessionKey.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 
                                 //server nonce
                                 String ReceivedServerNonce = (String) response.get("serverNonce");
                                 serverNonce = ReceivedServerNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                                 //encrypted server nonce that will be sent to gatt server.
                                 String encryptedServerNonce = (String) response.get("encryptedServerNonce");
-                                byte[] encryptedServerNonceBytes= encryptedServerNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                                byte[] encryptedServerNonceBytes = encryptedServerNonce.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
 
                                 if (Arrays.equals(orginalCnonce, clientDecryptedNonceBytes)) {
                                     System.out.println("client are sure about the server is real one");
@@ -271,18 +281,24 @@ public class BluetoothLeService extends Service {
                                     //byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length];
                                     //System.arraycopy(serverDecryptedNonceBytes, 0, concatenatednonces, 0, serverDecryptedNonceBytes.length);
                                     //System.arraycopy( encryptedSessionKeyBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length,  encryptedSessionKeyBytes.length);
-                                    writeCustomCharacteristic(serverDecryptedNonceBytes,UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-                                    writeCustomCharacteristic(encryptedSessionKeyBytes,UUID.fromString("fb340005-8000-0080-0010-00000d180000"));
-                                    writeCustomCharacteristic(encryptedServerNonceBytes,UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(serverDecryptedNonceBytes, UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(encryptedSessionKeyBytes, UUID.fromString("fb340005-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(encryptedServerNonceBytes, UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
                                     readCustomCharacteristic(UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
-                                }else{
+                                } else {
                                     mBluetoothGatt.disconnect();
                                 }
 
                                 Log.d(TAG, response.get("CNonce") + " i am queen");
+                                }else {
+                                    //myToast = Toast.makeText(getActivity(), "you need to login !", Toast.LENGTH_SHORT);
+                                    //myToast.show();
+                                    System.out.println("you are not authenticated");
+                                }
                             } catch (JSONException e) {
                                 e.printStackTrace();
-                            }
+
+                        }
                         }
                     }, new Response.ErrorListener() {
                 @Override
@@ -403,7 +419,7 @@ public class BluetoothLeService extends Service {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
-                mBluetoothGatt.requestMtu(512);
+                //mBluetoothGatt.requestMtu(512);
                 return true;
             } else {
                 return false;
@@ -419,7 +435,7 @@ public class BluetoothLeService extends Service {
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-        boolean res = device.createBond();
+        //boolean res = device.createBond();
 
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
@@ -504,12 +520,12 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
         // This is specific to Heart Rate Measurement.
-        if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
+       /* if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
             BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
                     UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
             descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             mBluetoothGatt.writeDescriptor(descriptor);
-        }
+        }*/
     }
 
     /**
@@ -637,6 +653,11 @@ public class BluetoothLeService extends Service {
         }
         /*get the read characteristic from the service*/
         final  BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
+
+        if(sessionKey!=null && uuid.equals(UUID.fromString("fb340007-8000-0080-0010-00000d180000"))){
+            value = aes.encryptwihpadding(value,sessionKey);
+        }
+
         mWriteCharacteristic.setValue(value);
         //mWriteCharacteristic.setWriteType(2);
         if(uuid.equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000"))) {

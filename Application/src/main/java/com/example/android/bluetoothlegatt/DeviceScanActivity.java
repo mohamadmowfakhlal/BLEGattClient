@@ -67,7 +67,7 @@ public class DeviceScanActivity extends ListActivity {
     private static final int REQUEST_ENABLE_BT = 1;
     // Stops scanning after 10 seconds.
     private static final long SCAN_PERIOD = 50000;
-
+    private String username;
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,7 +98,8 @@ public class DeviceScanActivity extends ListActivity {
         //bundle.getSerializable("Obj");
         //Bundle bundle = new Bundle();
         //bundle.getParcelableArrayList("list");
-        ArrayList<Device> myList = (ArrayList<Device>) getIntent().getSerializableExtra("mylist");
+        //ArrayList<Device> myList = (ArrayList<Device>) getIntent().getSerializableExtra("mylist");
+        username = (String)getIntent().getStringExtra("username");
         mLeScanner = mBluetoothAdapter.getBluetoothLeScanner();
     }
 
@@ -203,6 +204,8 @@ public class DeviceScanActivity extends ListActivity {
         final Intent intent = new Intent(this, DeviceControlActivity.class);
         intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_NAME, device.getName());
         intent.putExtra(DeviceControlActivity.EXTRAS_DEVICE_ADDRESS, device.getAddress());
+        intent.putExtra(DeviceControlActivity.USER_NAME, username);
+
         if (mScanning) {
             mBluetoothAdapter.stopLeScan(mLeScanCallback);
             mScanning = false;

@@ -17,25 +17,31 @@
 package com.example.android.bluetoothlegatt;
 
 import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 
 /**
  * This class includes a small subset of standard GATT attributes for demonstration purposes.
  */
 public class SampleGattAttributes {
     private static HashMap<String, String> attributes = new HashMap();
-    public static String HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
-    public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
+    //public static String HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
+   // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
     static {
         // Sample Services.
-        attributes.put("0000180d-0000-1000-8000-00805f9b34fb", "Heart Rate Service");
-        attributes.put("0000180a-0000-1000-8000-00805f9b34fb", "Device Information Service");
+        //attributes.put("0000180d-0000-1000-8000-00805f9b34fb", "Heart Rate Service");
+        //attributes.put("0000180a-0000-1000-8000-00805f9b34fb", "Device Information Service");
         // Sample Characteristics.
-        attributes.put(HEART_RATE_MEASUREMENT, "Heart Rate Measurement");
+        //attributes.put(HEART_RATE_MEASUREMENT, "Heart Rate Measurement");
         attributes.put("00002a29-0000-1000-8000-00805f9b34fb", "Manufacturer Name String");
         attributes.put("fb340001-8000-0080-0010-00000d180000", "service");
-        attributes.put("fb340004-8000-0080-0010-00000d180000", "ServerNonces");
-        attributes.put("fb340003-8000-0080-0010-00000d180000", "ClientNonces");
+        attributes.put("fb340004-8000-0080-0010-00000d180000", "serverNonces");
+        attributes.put("fb340003-8000-0080-0010-00000d180000", "clientNonces");
+        attributes.put("fb340005-8000-0080-0010-00000d180000","sessionNonce");
+        attributes.put("fb340006-8000-0080-0010-00000d180000","restServerNonce");
+        attributes.put("fb340007-8000-0080-0010-00000d180000","realData");
+        attributes.put("fb340009-8000-0080-0010-00000d180000","deviceID");
 
     }
 
@@ -43,4 +49,14 @@ public class SampleGattAttributes {
         String name = attributes.get(uuid);
         return name == null ? defaultName : name;
     }
+
+    public static UUID getUUIDForName(String name){
+        for (Map.Entry<String, String> entry : attributes.entrySet()) {
+            if (entry.getValue().equals(name)) {
+                System.out.println(entry.getKey());
+                return UUID.fromString(entry.getKey());
+            }
+        }
+        return  null;
+        }
 }
