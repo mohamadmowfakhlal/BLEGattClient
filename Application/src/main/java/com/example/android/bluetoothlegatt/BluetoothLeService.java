@@ -22,7 +22,6 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
-import android.bluetooth.BluetoothGattDescriptor;
 import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
@@ -36,32 +35,25 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
-import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
-import com.android.volley.ServerError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
-import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
 
 import static android.bluetooth.BluetoothGatt.GATT_SUCCESS;
 import static android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ;
@@ -94,12 +86,12 @@ public class BluetoothLeService extends Service {
             "com.example.bluetooth.le.ACTION_DATA_AVAILABLE";
     public final static String EXTRA_DATA =
             "com.example.bluetooth.le.EXTRA_DATA";
-    //public final static UUID UUID_HEART_RATE_MEASUREMENT = UUID.fromString(SampleGattAttributes.HEART_RATE_MEASUREMENT);
-    String serverURL = "http://ec2-18-194-15-165.eu-central-1.compute.amazonaws.com";
+    String serverURL = SampleGattAttributes.getServerURL();
     RequestQueue queue;
     private byte[] orginalCnonce;
     Nonces nonce = new Nonces();
     AES aes = new AES();
+    public byte[] deviceIDValue;
 
     public void setUsername(String username) {
         this.username = username;
@@ -118,6 +110,10 @@ public class BluetoothLeService extends Service {
 
     public static BluetoothDevice getDevice() {
         return device;
+    }
+
+    public byte[] getSessionKey() {
+        return sessionKey;
     }
 
     private static  BluetoothDevice device;
@@ -161,20 +157,33 @@ public class BluetoothLeService extends Service {
         public void onCharacteristicWrite(BluetoothGatt gatt,
                                           BluetoothGattCharacteristic characteristic, int status) {
 
-
+            if (status == GATT_SUCCESS) {
             System.out.println("before reading");
-            if(!characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000")
-            )) {
-                //readCustomCharacteristic(characteristic.getUuid());
-                System.out.println("after reading");
+           if(characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("GattServerNonce"))){
+             //   readCustomCharacteristic(SampleGattAttributes.getUUIDForName("GattServerNonce"));
+                System.out.println("after "+characteristic.getValue());
 
-                //readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-                //connect(nonce);
+            }else if(characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("deviceID"))){
+             //   readCustomCharacteristic(SampleGattAttributes.getUUIDForName("GattServerNonce"));
+                System.out.println(" reading"+characteristic.getValue());
 
-            }else if(characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000"))){
-             //   readCustomCharacteristic(UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-                System.out.println("after reading"+characteristic.getValue());
+            }else if(characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("realData"))){
+                //   readCustomCharacteristic(SampleGattAttributes.getUUIDForName("GattServerNonce"));
+                System.out.println(" writing"+characteristic.getValue());
 
+            }
+            }else if (status == BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION) {
+                // This is where the tricky part comes
+                if (gatt.getDevice().getBondState() == BluetoothDevice.BOND_NONE) {
+                    // Bonding required.
+                    // The broadcast receiver should be called.
+                } else {
+                    // ?
+                }
+            } else if (status == BluetoothGatt.GATT_INSUFFICIENT_ENCRYPTION) {
+
+            }else if (status == 0x89) {
+                System.out.println("authentication failed");
             }
             // Perform some checks on the status field
             if (status != GATT_SUCCESS) {
@@ -194,17 +203,20 @@ public class BluetoothLeService extends Service {
                                          BluetoothGattCharacteristic characteristic,
                                          int status) {
             if (status == GATT_SUCCESS) {
-                 if (characteristic.getUuid().equals(UUID.fromString("fb340004-8000-0080-0010-00000d180000"))) {
+                 if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("GattServerNonce"))) {
                     nonce.setSNonce(characteristic.getValue());
                      connect(nonce);
                  }
-                if (characteristic.getUuid().equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000"))) {
+                if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("clientNonce"))) {
                     System.out.println("Recieved Cnonce" + characteristic.getValue().toString());
                     nonce.setCNonce(characteristic.getValue());
                     clientNonce = true;
-                }else  if (characteristic.getUuid().equals(UUID.fromString("fb340006-8000-0080-0010-00000d180000"))) {
+                }else  if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("restServerNonce"))) {
                     if(Arrays.equals(serverNonce, aes.decrypt(characteristic.getValue(),sessionKey)))
                         System.out.println("correct session and protection against reply attack");
+                } else if(characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("deviceID"))){
+                    nonce.setDeviceID(characteristic.getValue());
+                    deviceIDValue = characteristic.getValue();
                 }
                   broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             } else if (status == BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION) {
@@ -215,8 +227,8 @@ public class BluetoothLeService extends Service {
                 } else {
                     // ?
                 }
-            } else if (status == BluetoothGatt.GATT_INSUFFICIENT_ENCRYPTION) {
-
+            } else if (status == 0x89) {
+                System.out.println("authentication failed");
             }
 
             // Perform some checks on the status field
@@ -240,7 +252,7 @@ public class BluetoothLeService extends Service {
             try {
                 js.put("SNonce",new String(nonce.SNonce,java.nio.charset.StandardCharsets.ISO_8859_1) );
                 js.put("CNonce", new String(nonce.CNonce,java.nio.charset.StandardCharsets.ISO_8859_1));
-                js.put("deviceID", "1922222220");
+                js.put("deviceID", new String(nonce.deviceID,java.nio.charset.StandardCharsets.ISO_8859_1));
                 js.put("username", username);
 
             } catch (JSONException e) {
@@ -281,18 +293,16 @@ public class BluetoothLeService extends Service {
                                     //byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length];
                                     //System.arraycopy(serverDecryptedNonceBytes, 0, concatenatednonces, 0, serverDecryptedNonceBytes.length);
                                     //System.arraycopy( encryptedSessionKeyBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length,  encryptedSessionKeyBytes.length);
-                                    writeCustomCharacteristic(serverDecryptedNonceBytes, UUID.fromString("fb340004-8000-0080-0010-00000d180000"));
-                                    writeCustomCharacteristic(encryptedSessionKeyBytes, UUID.fromString("fb340005-8000-0080-0010-00000d180000"));
-                                    writeCustomCharacteristic(encryptedServerNonceBytes, UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
-                                    readCustomCharacteristic(UUID.fromString("fb340006-8000-0080-0010-00000d180000"));
+                                    writeCustomCharacteristic(serverDecryptedNonceBytes, SampleGattAttributes.getUUIDForName("GattServerNonce"));
+                                    writeCustomCharacteristic(encryptedSessionKeyBytes, SampleGattAttributes.getUUIDForName("sessionKey"));
+                                    writeCustomCharacteristic(encryptedServerNonceBytes, SampleGattAttributes.getUUIDForName("restServerNonce"));
+                                    readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("restServerNonce"));
                                 } else {
                                     mBluetoothGatt.disconnect();
                                 }
 
                                 Log.d(TAG, response.get("CNonce") + " i am queen");
                                 }else {
-                                    //myToast = Toast.makeText(getActivity(), "you need to login !", Toast.LENGTH_SHORT);
-                                    //myToast.show();
                                     System.out.println("you are not authenticated");
                                 }
                             } catch (JSONException e) {
@@ -303,7 +313,7 @@ public class BluetoothLeService extends Service {
                     }, new Response.ErrorListener() {
                 @Override
                 public void onErrorResponse(VolleyError error) {
-                    VolleyLog.d(TAG, "Error: " + error.getMessage());
+                      VolleyLog.d(TAG, "Error: " + error.getMessage());
                 }
             }) {
 
@@ -419,7 +429,7 @@ public class BluetoothLeService extends Service {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
-                //mBluetoothGatt.requestMtu(512);
+                boolean MTU = mBluetoothGatt.requestMtu(512);
                 return true;
             } else {
                 return false;
@@ -435,7 +445,11 @@ public class BluetoothLeService extends Service {
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
-        //boolean res = device.createBond();
+        //int bond = device.getBondState();
+        //there is an already bond 10
+       // if(bond==10)
+        //device.createBond();
+        //boolean MTU = mBluetoothGatt.requestMtu(512);
 
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
@@ -470,47 +484,7 @@ public class BluetoothLeService extends Service {
         mBluetoothGatt = null;
     }
 
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
-     *
-     * @param characteristic The characteristic to read from.
-     */
-    public void readCharacteristic1(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
 
-     mBluetoothGatt.readCharacteristic(characteristic);
-    }
-
-
-    /**
-     * Request a read on a given {@code BluetoothGattCharacteristic}. The read result is reported
-     * asynchronously through the {@code BluetoothGattCallback#onCharacteristicRead(android.bluetooth.BluetoothGatt, android.bluetooth.BluetoothGattCharacteristic, int)}
-     * callback.
-     *
-     * @param characteristic The characteristic to read from.
-     */
-    public void writeCharacteristic(BluetoothGattCharacteristic characteristic) {
-        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
-            Log.w(TAG, "BluetoothAdapter not initialized");
-            return;
-        }
-
-     mBluetoothGatt.writeCharacteristic(characteristic);
-
-    }
-
-
-    /**
-     * Enables or disables notification on a give characteristic.
-     *
-     * @param characteristic Characteristic to act on.
-     * @param enabled If true, enable notification.  False otherwise.
-     */
     public void setCharacteristicNotification(BluetoothGattCharacteristic characteristic,
                                               boolean enabled) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
@@ -519,13 +493,6 @@ public class BluetoothLeService extends Service {
         }
         mBluetoothGatt.setCharacteristicNotification(characteristic, enabled);
 
-        // This is specific to Heart Rate Measurement.
-       /* if (UUID_HEART_RATE_MEASUREMENT.equals(characteristic.getUuid())) {
-            BluetoothGattDescriptor descriptor = characteristic.getDescriptor(
-                    UUID.fromString(SampleGattAttributes.CLIENT_CHARACTERISTIC_CONFIG));
-            descriptor.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-            mBluetoothGatt.writeDescriptor(descriptor);
-        }*/
     }
 
     /**
@@ -539,12 +506,28 @@ public class BluetoothLeService extends Service {
 
         return mBluetoothGatt.getServices();
     }
-    public void readCustomCharacteristic(UUID uuid) {
+    public void readCustomCharacteristicForService(UUID uuid) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
         }
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("fb340001-8000-0080-0010-00000d180000"));
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(SampleGattAttributes.getUUIDForName("SecurityService"));
+        if(mCustomService == null){
+            Log.w(TAG, "Custom BLE Service not found");
+        }
+        /*get the read characteristic from the service*/
+        BluetoothGattCharacteristic mReadCharacteristic = mCustomService.getCharacteristic(uuid);
+        if(readCharacteristic(mReadCharacteristic) == false){
+            Log.w(TAG, "Failed to read characteristic");
+        }
+
+    }
+    public void readCustomCharacteristicForService(UUID uuid, String serviceName) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+        }
+        /*check if the service is available on the device*/
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(SampleGattAttributes.getUUIDForName(serviceName));
         if(mCustomService == null){
             Log.w(TAG, "Custom BLE Service not found");
         }
@@ -634,18 +617,75 @@ public class BluetoothLeService extends Service {
         commandQueue.poll();
         nextCommand();
     }
+
     public void writeCustomCharacteristic(byte[] value,UUID uuid) {
-        System.out.println("Client nonces........ttt........");
+       // System.out.println("Client nonces........ttt........");
 
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
             return;
         }
-        System.out.println("Client nonces........ela........");
+        //System.out.println("Client nonces........ela........");
 
         /*check if the service is available on the device*/
-        BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString("fb340001-8000-0080-0010-00000d180000"));
-        System.out.println("Client nonces........ali........");
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(SampleGattAttributes.getUUIDForName("SecurityService"));
+        //System.out.println("Client nonces........ali........");
+
+        if(mCustomService == null){
+            Log.w(TAG, "Custom BLE Service not found");
+            return;
+        }
+
+        /*get the read characteristic from the service*/
+        final  BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
+        if(sessionKey!=null && uuid.equals(SampleGattAttributes.getUUIDForName("realData"))){
+            value = aes.encryptwihpadding(value,sessionKey);
+        }
+        mWriteCharacteristic.setValue(value);
+        //mWriteCharacteristic.setWriteType(2);
+        if(uuid.equals(SampleGattAttributes.getUUIDForName("clientNonce"))) {
+            orginalCnonce = value;
+            //mWriteCharacteristic.setWriteType(1);
+          //  System.out.println("Cnonce" + orginalCnonce.toString());
+        }
+
+        //System.out.println("Client nonces........................kkkkkkkkk......................................");
+        //if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
+          // Log.w(TAG, "Failed to write characteristic");
+        //}
+        // Enqueue the write command now that all checks have been passed
+        boolean result = commandQueue.add(new Runnable() {
+            @Override
+            public void run() {
+                if(!mBluetoothGatt.writeCharacteristic(mWriteCharacteristic)) {
+                    Log.e(TAG, String.format("ERROR: readCharacteristic failed for characteristic: %s", mWriteCharacteristic.getUuid()));
+                    completedCommand();
+                } else {
+                    Log.d(TAG, String.format("reading characteristic <%s>", mWriteCharacteristic.getUuid()));
+                    nrTries++;
+                }
+            }
+        });
+
+        if(result) {
+            nextCommand();
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue read characteristic command");
+        }
+    }
+
+    public void writeCustomCharacteristic(byte[] value,UUID uuid,String serviceName) {
+       // System.out.println("Client nonces........ttt........");
+
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter not initialized");
+            return;
+        }
+        //System.out.println("Client nonces........ela........");
+
+        /*check if the service is available on the device*/
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(SampleGattAttributes.getUUIDForName(serviceName));
+        //System.out.println("Client nonces........ali........");
 
         if(mCustomService == null){
             Log.w(TAG, "Custom BLE Service not found");
@@ -654,18 +694,18 @@ public class BluetoothLeService extends Service {
         /*get the read characteristic from the service*/
         final  BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
 
-        if(sessionKey!=null && uuid.equals(UUID.fromString("fb340007-8000-0080-0010-00000d180000"))){
+        if(sessionKey!=null && uuid.equals(SampleGattAttributes.getUUIDForName("realData"))){
             value = aes.encryptwihpadding(value,sessionKey);
         }
 
         mWriteCharacteristic.setValue(value);
         //mWriteCharacteristic.setWriteType(2);
-        if(uuid.equals(UUID.fromString("fb340003-8000-0080-0010-00000d180000"))) {
+        if(uuid.equals(SampleGattAttributes.getUUIDForName("clientNonce"))) {
             orginalCnonce = value;
             //mWriteCharacteristic.setWriteType(1);
-            System.out.println("Cnonce" + orginalCnonce.toString());
+          //  System.out.println("Cnonce" + orginalCnonce.toString());
         }
-        System.out.println("Client nonces........................kkkkkkkkk......................................");
+        //System.out.println("Client nonces........................kkkkkkkkk......................................");
         //if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
           // Log.w(TAG, "Failed to write characteristic");
         //}

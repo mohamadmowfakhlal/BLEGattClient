@@ -1641,6 +1641,7 @@ id FirstFragment
 id MAC
 id META
 id NO_DEBUG
+id NewkeyLabel
 id SHIFT
 id SHOW_ALL
 id SHOW_PATH
@@ -1738,6 +1739,7 @@ id center_horizontal
 id center_vertical
 id chain
 id chains
+id changekey_button
 id checkbox
 id checked
 id chip
@@ -1750,6 +1752,7 @@ id clear_text
 id clip_horizontal
 id clip_vertical
 id collapseActionView
+id configue_button
 id confirm_button
 id connection_state
 id container
@@ -1774,6 +1777,7 @@ id design_menu_item_action_area_stub
 id design_menu_item_text
 id design_navigation_view
 id deviceID
+id deviceIDLabel
 id device_address
 id device_name
 id dialog_button
@@ -1837,6 +1841,7 @@ id italic
 id item_touch_helper_previous_elevation
 id jumpToEnd
 id jumpToStart
+id key
 id labeled
 id largeLabel
 id layout
@@ -1845,6 +1850,7 @@ id line1
 id line3
 id linear
 id listMode
+id listService_button
 id list_item
 id list_view
 id masked
@@ -1892,6 +1898,7 @@ id nav_host_fragment
 id nav_host_fragment_container
 id navigation_header_container
 id never
+id newkey
 id noScroll
 id none
 id normal
@@ -1927,6 +1934,7 @@ id right_icon
 id right_side
 id rounded
 id row_index_key
+id save_button
 id save_non_transition_alpha
 id save_overlay_view
 id sawtooth
@@ -2107,6 +2115,7 @@ layout abc_tooltip
 layout actionbar_indeterminate_progress
 layout activity_main
 layout button_control
+layout configuration_control
 layout content_main
 layout custom_dialog
 layout design_bottom_navigation_item
@@ -2236,6 +2245,8 @@ string chip_text
 string clear_text_end_icon_content_description
 string connect
 string connected
+string currentDeviceID
+string deviceID
 string disconnected
 string error_bluetooth_not_supported
 string error_icon_content_description
@@ -2247,6 +2258,7 @@ string hide_bottom_view_on_scroll_behavior
 string icon_content_description
 string intro_message
 string item_view_role_description
+string key
 string label_data
 string label_device_address
 string label_state
@@ -2293,6 +2305,7 @@ string mtrl_picker_toggle_to_text_input_mode
 string mtrl_picker_toggle_to_year_selection
 string nav_app_bar_navigate_up_description
 string nav_app_bar_open_drawer_description
+string newkey
 string no_data
 string no_key
 string password

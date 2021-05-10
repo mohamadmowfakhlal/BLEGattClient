@@ -6,7 +6,7 @@ import org.json.JSONObject;
 public class Nonces {
 public byte[] CNonce;
 public byte[] SNonce;
-public String MAC;
+public byte [] deviceID;
 public byte[] getCNonce() {
 	return CNonce;
 }
@@ -19,18 +19,18 @@ public byte[] getSNonce() {
 public void setSNonce(byte[] sNonce) {
 	SNonce = sNonce;
 }
-public String getMAC() {
-	return MAC;
+public byte[] getDeviceID() {
+	return deviceID;
 }
-public void setMAC(String mAC) {
-	MAC = mAC;
+public void setDeviceID(byte[] deviceid) {
+	deviceID = deviceid;
 }
 
 	public JSONObject toJSON() throws JSONException {
 
 		JSONObject jo = new JSONObject();
 		jo.put("SNonce", SNonce);
-		jo.put("MAC", MAC);
+		jo.put("deviceID", deviceID);
 		jo.put("CNonce",CNonce);
 
 		return jo;

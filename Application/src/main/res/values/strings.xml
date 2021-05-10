@@ -50,6 +50,10 @@
     <string name="toast_button_text">Toast</string>
     <string name="random_button_text">Random</string>
     <string name="connect">connect</string>
+    <string name="key">current key</string>
+    <string name="deviceID">new deviceID</string>
+    <string name="newkey">newkey</string>
+    <string name="currentDeviceID">currentDeviceID</string>
 
     <string-array name="array_technology">
         <item>Android</item>

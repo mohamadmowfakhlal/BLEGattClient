@@ -26,8 +26,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 //import android.support.annotation.RequiresApi;
 import android.util.Log;
@@ -39,19 +39,28 @@ import android.widget.EditText;
 import android.widget.ExpandableListView;
 import android.widget.SimpleExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 
 //import com.google.android.things.bluetooth.BluetoothConfigManager;
 
-import androidx.annotation.RequiresApi;
-
+import com.android.volley.AuthFailureError;
+import com.android.volley.Request;
 import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.lang.reflect.Method;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
+import java.util.Map;
 
 
 /**
@@ -92,6 +101,36 @@ public class DeviceControlActivity extends Activity {
     boolean justworks = false ;
     boolean pin = false;
     boolean plaintext = true ;
+
+    private EditText deviceID;
+    //private EditText key;
+    //    private TextView keyLabel;
+    private EditText newKey;
+    private TextView deviceIDLabel;
+    private TextView newKeyLabel;
+    //private TextView deviceIDValue;
+
+    private boolean changeDeviceID;
+    private Button configureButton;
+    private Button listServiceButton;
+    private Button changeKeyButton;
+    private Button saveButton;
+    private String serverURL = SampleGattAttributes.getServerURL();
+    RequestQueue queue;
+    Toast myToast;
+    // Start GATT delay (wait for BLE scan to actually finish)
+    private static final long START_GATT_DELAY = 500; // msec
+
+    private final Handler mStartGattHandler = new Handler();
+    private final Runnable mStartGattRunnable = new Runnable() {
+        @Override
+        public void run() {
+            Intent gattServiceIntent = new Intent(DeviceControlActivity.this,
+                    BluetoothLeService.class);
+            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        }
+    };
+
     // Code to manage Service lifecycle.
     private final ServiceConnection mServiceConnection = new ServiceConnection() {
 
@@ -149,7 +188,7 @@ public class DeviceControlActivity extends Activity {
 
             if (bondstate == BluetoothDevice.BOND_BONDED) {
 
-                if (!numericcomparison || !passkey || !pin) {
+                if (!numericcomparison && !passkey && !pin) {
                     justworks = true;
                     plaintext = false;
                     System.out.println("just work");
@@ -182,7 +221,7 @@ public class DeviceControlActivity extends Activity {
                 clearUI();
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
-                displayGattServices(mBluetoothLeService.getSupportedGattServices());
+                displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
                 establishSecureConnection();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
@@ -222,23 +261,32 @@ public class DeviceControlActivity extends Activity {
                                 mBluetoothLeService.setCharacteristicNotification(
                                         characteristic, true);
                             }
-
-
-
                             return true;
                     }
                     return false;
                 }
     };
 
+
     private void clearUI() {
-        //mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
+        mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
+
         mDataField.setText(R.string.no_data);
+        deviceID.setVisibility(View.INVISIBLE);
+        newKey.setVisibility(View.INVISIBLE);
+        deviceIDLabel.setVisibility(View.INVISIBLE);
+        newKeyLabel.setVisibility(View.INVISIBLE);
+        configureButton.setVisibility(View.INVISIBLE);
+        listServiceButton.setVisibility(View.INVISIBLE);
+        changeKeyButton.setVisibility(View.INVISIBLE);
+        saveButton.setVisibility(View.INVISIBLE);
+        writeButton.setVisibility(View.INVISIBLE);
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
         setContentView(R.layout.button_control);
 
         final Intent intent = getIntent();
@@ -254,14 +302,118 @@ public class DeviceControlActivity extends Activity {
         writeButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // your handler code here
-                mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("realData"));
+                //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("realData"),"configurationservice");
+                mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("realData"),"TimeService");
+            }
+        });
+
+        final AES aes = new AES();
+
+        // Sets up UI references.
+
+        deviceID = (EditText) findViewById(R.id.deviceID);
+        //key = (EditText) findViewById(R.id.key);
+        newKey = (EditText) findViewById(R.id.newkey);
+        deviceIDLabel = (TextView) findViewById(R.id.deviceIDLabel);
+        //keyLabel = (TextView) findViewById(R.id.keyLabel);
+        newKeyLabel = (TextView) findViewById(R.id.NewkeyLabel);
+        configureButton = (Button) findViewById(R.id.configue_button);
+        changeKeyButton = (Button) findViewById(R.id.changekey_button);
+        saveButton = (Button) findViewById(R.id.save_button);
+        listServiceButton = (Button) findViewById(R.id.listService_button);
+        configureButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                deviceID.setVisibility(View.VISIBLE);
+                deviceIDLabel.setVisibility(View.VISIBLE);
+                newKey.setVisibility(View.INVISIBLE);
+                newKeyLabel.setVisibility(View.INVISIBLE);
+                saveButton.setVisibility(View.VISIBLE);
+                displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
+                changeDeviceID = true;
+                mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));
+
+                //Intent intent = new Intent(DeviceControlActivity.this,DeviceConfig.class);
+                //startActivity(intent);
+               // mBluetoothLeService.writeCustomCharacteristic(key. getText(). toString().getBytes(),SampleGattAttributes.getUUIDForName("key"));
+                //mBluetoothLeService.writeCustomCharacteristic(deviceID. getText(). toString().getBytes(),SampleGattAttributes.getUUIDForName("deviceID"));
+            }
+        });
+
+        listServiceButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                deviceID.setVisibility(View.INVISIBLE);
+                deviceIDLabel.setVisibility(View.INVISIBLE);
+                //key.setVisibility(View.INVISIBLE);
+                //keyLabel.setVisibility(View.INVISIBLE);
+                newKey.setVisibility(View.INVISIBLE);
+                newKeyLabel.setVisibility(View.INVISIBLE);
+                saveButton.setVisibility(View.INVISIBLE);
+
+                displayGattServices(mBluetoothLeService.getSupportedGattServices(),true);
+                //Intent intent = new Intent(DeviceControlActivity.this,DeviceConfig.class);
+                //startActivity(intent);
 
             }
         });
+        changeKeyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //newKey.setVisibility(View.VISIBLE);
+                //newKeyLabel.setVisibility(View.VISIBLE);
+                //key.setVisibility(View.VISIBLE);
+                //keyLabel.setVisibility(View.VISIBLE);
+                deviceID.setVisibility(View.INVISIBLE);
+                deviceIDLabel.setVisibility(View.INVISIBLE);
+                //saveButton.setVisibility(View.VISIBLE);
+                displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
+                changeDeviceID = false;
+                byte[] key = new byte[16];
+                new SecureRandom().nextBytes(key);
+                byte[] encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
+                mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
+                setNewKey(mBluetoothLeService.deviceIDValue,key);
+                mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("key"));
+
+            }
+        });
+
+        saveButton.setOnClickListener(new View.OnClickListener() {
+
+
+            @Override
+            public void onClick(View v) {
+                // mBluetoothLeService.writeCustomCharacteristic(key. getText(). toString().getBytes(),SampleGattAttributes.getUUIDForName("key"));
+                if(changeDeviceID){
+                    byte[] encryptedDeviceID = aes.encryptwihpadding(deviceID.getText().toString().getBytes(),mBluetoothLeService.getSessionKey());
+                    setDeviceID(deviceID.getText().toString(),mBluetoothLeService.deviceIDValue);
+                    mBluetoothLeService.writeCustomCharacteristic(encryptedDeviceID,SampleGattAttributes.getUUIDForName("deviceID"));
+                    //deviceIDValue.setText("");
+                }else{
+                    //byte[] s = newKey.getText().toString().getBytes();
+                    //byte[] ss = mBluetoothLeService.getSessionKey();
+                    //add padding  to key
+                    /*int paddedlength= 0;
+                    String paddedKey = newKey.getText().toString();
+                    if(newKey.getText().length()<16){
+                        paddedlength = 16 - newKey.getText().length();
+                        for(int i =0;i<paddedlength;i++)
+                            paddedKey = paddedKey+ "0";
+                    }*/
+                    byte[] key = new byte[16];
+                    new SecureRandom().nextBytes(key);
+                    byte[] encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
+                    mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
+                    setNewKey(mBluetoothLeService.deviceIDValue,key);
+                }
+            }
+        });
+
         getActionBar().setTitle(mDeviceName);
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
-        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+        mStartGattHandler.postDelayed(mStartGattRunnable, START_GATT_DELAY);
+
+//        bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
         IntentFilter pairingRequestFilter = new
                 IntentFilter (BluetoothDevice.ACTION_FOUND) ;
@@ -295,7 +447,7 @@ public class DeviceControlActivity extends Activity {
         super.onDestroy();
         unbindService(mServiceConnection);
         unregisterReceiver(mPairingRequestReceiver);
-        unpairDevice(mBluetoothLeService.getDevice());
+        //unpairDevice(mBluetoothLeService.getDevice());
         mBluetoothLeService = null;
 
     }
@@ -354,7 +506,7 @@ public class DeviceControlActivity extends Activity {
     // Demonstrates how to iterate through the supported GATT Services/Characteristics.
     // In this sample, we populate the data structure that is bound to the ExpandableListView
     // on the UI.
-    private void displayGattServices(List<BluetoothGattService> gattServices) {
+    private void displayGattServices(List<BluetoothGattService> gattServices,boolean show) {
         if (gattServices == null) return;
         String uuid = null;
         String unknownServiceString = getResources().getString(R.string.unknown_service);
@@ -389,9 +541,12 @@ public class DeviceControlActivity extends Activity {
                         LIST_NAME, SampleGattAttributes.lookup(uuid, unknownCharaString));
                 currentCharaData.put(LIST_UUID, uuid);
                 gattCharacteristicGroupData.add(currentCharaData);
+                //if(gattCharacteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("deviceID")) && gattCharacteristic.getValue() != null)
+                    //deviceIDValue.setText(gattCharacteristic.getValue().toString());
             }
             mGattCharacteristics.add(charas);
             gattCharacteristicData.add(gattCharacteristicGroupData);
+
         }
 
         SimpleExpandableListAdapter gattServiceAdapter = new SimpleExpandableListAdapter(
@@ -405,7 +560,10 @@ public class DeviceControlActivity extends Activity {
                 new String[] {LIST_NAME, LIST_UUID},
                 new int[] { android.R.id.text1, android.R.id.text2 }
         );
-        mGattServicesList.setAdapter(gattServiceAdapter);
+        if(show)
+            mGattServicesList.setAdapter(gattServiceAdapter);
+        else
+            mGattServicesList.setAdapter((SimpleExpandableListAdapter) null);
     }
 
     private static IntentFilter makeGattUpdateIntentFilter() {
@@ -416,56 +574,134 @@ public class DeviceControlActivity extends Activity {
         intentFilter.addAction(BluetoothLeService.ACTION_DATA_AVAILABLE);
         return intentFilter;
     }
-
-    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-    public void onClickWrite(View v) throws Exception {
-        if(mBluetoothLeService != null) {
-            if(numberofattempt ==2){
-                mConnected = false;
-                updateConnectionState(R.string.disconnected);
-                invalidateOptionsMenu();
-                clearUI();
-            }
-            //mBluetoothLeService.readCustomCharacteristic();
-            //TimeUnit.SECONDS.sleep(1);
-            //byte[] CDRIVES = hexStringToByteArray("e04fd020ea3a6910a2d808002b30309d");
-
-            //byte[] bytes = new byte[16];
-            //Arrays.fill( bytes, (byte) 1 );
-            String key = mkeyField.getText().toString();
-            //byte[] data_to_write=new byte[] {0x68,0x65,0x6c,0x6c,0x6f,0x77,0x6f,0x72,0x6c,0x64,0x73,0x65,0x63,0x75,0x72,0x69};
-            byte[] keyBytes = key.getBytes("UTF-8");
-            AES aes = new AES();
-
-           // byte [] response = aes.encrypt(mBluetoothLeService.data,sessionKey);
-            //if(response != null){
-            mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(),SampleGattAttributes.getUUIDForName("realData"));
-            numberofattempt = 0;
-           // }
-            //else{
-              //  mkeyField.setText("wrong password");
-               // numberofattempt += 1;
-            //}
-        }
-    }
-
-
-    public void onClickRead(View v){
-        if(mBluetoothLeService != null) {
-           // mBluetoothLeService.readCustomCharacteristic();
-        }
-    }
     public void establishSecureConnection() {
         byte[] Cnonce = new byte[16];
         new SecureRandom().nextBytes(Cnonce);
-        System.out.println("Client nonces"+Cnonce.toString());
-        mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonces"));
-        mBluetoothLeService.readCustomCharacteristic(SampleGattAttributes.getUUIDForName("clientNonces"));
-        mBluetoothLeService.readCustomCharacteristic(SampleGattAttributes.getUUIDForName("serverNonces"));
+        mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonce"));
+        mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("clientNonce"));
+        mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));
+        mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("GattServerNonce"));
         mBluetoothLeService.setUsername(username);
-        //mBluetoothLeService.connectRestServer();
-        System.out.println("Client nonces..............hhhhhhhhhhh...............");
     }
+
+    private void setDeviceID(String  deviceID,byte[] oldDeviceID) {
+        String token = serverURL + "/deviceID";
+        // Optional Parameters to pass as POST request
+        JSONObject js = new JSONObject();
+        try {
+            js.put("deviceID", deviceID);
+            js.put("oldDeviceID", new String(oldDeviceID,java.nio.charset.StandardCharsets.ISO_8859_1));
+            js.put("username", username);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // Make request for JSONObject
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(
+                Request.Method.POST, token, js,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            if(response.length() !=0){
+                                String clientDecryptedNonce = (String) response.get("deviceID");
+
+                            }else{
+                                myToast = Toast.makeText(DeviceControlActivity.this, "session is finished !", Toast.LENGTH_SHORT);
+                                myToast.show();
+                                final Intent intent = new Intent(DeviceControlActivity.this, MainActivity.class);
+                                startActivity(intent);
+                            }
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+
+            }
+        }) {
+
+            /**
+             * Passing some request headers
+             */
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+
+        };
+
+        // Adding request to request queue
+        queue = Volley.newRequestQueue(getApplicationContext());
+
+        queue.add(jsonObjReq);
+    }
+
+    private void setNewKey(byte[]  deviceID,byte[] newKey) {
+        String token = serverURL + "/key";
+        // Optional Parameters to pass as POST request
+        JSONObject js = new JSONObject();
+        try {
+            js.put("deviceID",  new String(deviceID,java.nio.charset.StandardCharsets.ISO_8859_1));
+            js.put("key", new String(newKey,java.nio.charset.StandardCharsets.ISO_8859_1));
+            js.put("username", username);
+
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        // Make request for JSONObject
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(
+                Request.Method.POST, token, js,
+                new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            if(response!=null){
+
+                            }else{
+
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error: " + error.getMessage());
+                myToast = Toast.makeText(DeviceControlActivity.this, "failed to login !", Toast.LENGTH_SHORT);
+                myToast.show();
+            }
+        }) {
+
+            /**
+             * Passing some request headers
+             */
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                return headers;
+            }
+
+        };
+
+        // Adding request to request queue
+        queue = Volley.newRequestQueue(getApplicationContext());
+
+        queue.add(jsonObjReq);
+    }
+
+
 }
 
 

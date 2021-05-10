@@ -25,26 +25,28 @@ import java.util.UUID;
  */
 public class SampleGattAttributes {
     private static HashMap<String, String> attributes = new HashMap();
-    //public static String HEART_RATE_MEASUREMENT = "00002a37-0000-1000-8000-00805f9b34fb";
-   // public static String CLIENT_CHARACTERISTIC_CONFIG = "00002902-0000-1000-8000-00805f9b34fb";
 
-    static {
-        // Sample Services.
-        //attributes.put("0000180d-0000-1000-8000-00805f9b34fb", "Heart Rate Service");
-        //attributes.put("0000180a-0000-1000-8000-00805f9b34fb", "Device Information Service");
-        // Sample Characteristics.
-        //attributes.put(HEART_RATE_MEASUREMENT, "Heart Rate Measurement");
-        attributes.put("00002a29-0000-1000-8000-00805f9b34fb", "Manufacturer Name String");
-        attributes.put("fb340001-8000-0080-0010-00000d180000", "service");
-        attributes.put("fb340004-8000-0080-0010-00000d180000", "serverNonces");
-        attributes.put("fb340003-8000-0080-0010-00000d180000", "clientNonces");
-        attributes.put("fb340005-8000-0080-0010-00000d180000","sessionNonce");
-        attributes.put("fb340006-8000-0080-0010-00000d180000","restServerNonce");
-        attributes.put("fb340007-8000-0080-0010-00000d180000","realData");
-        attributes.put("fb340009-8000-0080-0010-00000d180000","deviceID");
-
+    public static String getServerURL() {
+        return serverURL;
     }
 
+    private static  String serverURL = "http://ec2-3-66-224-220.eu-central-1.compute.amazonaws.com";
+
+    static {
+
+        attributes.put("fb340001-8000-0080-0010-00000d180000", "SecurityService");
+        attributes.put("00001805-0000-1000-8000-00805f9b34fb","TimeService");
+        attributes.put("fb440001-8000-0080-0010-00000d180000","ConfigurationService");
+        attributes.put("fb340004-8000-0080-0010-00000d180000", "GattServerNonce");
+        attributes.put("fb340003-8000-0080-0010-00000d180000", "clientNonce");
+        attributes.put("fb340005-8000-0080-0010-00000d180000","sessionKey");
+        attributes.put("fb340006-8000-0080-0010-00000d180000","restServerNonce");
+
+        attributes.put("00002901-0000-1000-8000-00805f9b34fb","realData");
+        attributes.put("fb340009-8000-0080-0010-00000d180000","deviceID");
+        attributes.put("fb340002-8000-0080-0010-00000d180000","key");
+        //attributes.put("fb340010-8000-0080-0010-00000d180000","newKey");
+    }
     public static String lookup(String uuid, String defaultName) {
         String name = attributes.get(uuid);
         return name == null ? defaultName : name;

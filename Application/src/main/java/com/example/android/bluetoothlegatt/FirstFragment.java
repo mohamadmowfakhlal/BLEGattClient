@@ -33,7 +33,7 @@ public class FirstFragment extends Fragment {
     EditText username;
     EditText password;
     Toast myToast;
-    String serverURL = "http://ec2-18-194-15-165.eu-central-1.compute.amazonaws.com";
+    String serverURL = SampleGattAttributes.getServerURL();
     String user_name;
     @Override
     public View onCreateView(
