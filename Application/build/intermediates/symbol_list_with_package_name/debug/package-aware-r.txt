@@ -1641,7 +1641,6 @@ id FirstFragment
 id MAC
 id META
 id NO_DEBUG
-id NewkeyLabel
 id SHIFT
 id SHOW_ALL
 id SHOW_PATH
@@ -1898,7 +1897,6 @@ id nav_host_fragment
 id nav_host_fragment_container
 id navigation_header_container
 id never
-id newkey
 id noScroll
 id none
 id normal

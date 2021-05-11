@@ -273,9 +273,9 @@ public class DeviceControlActivity extends Activity {
 
         mDataField.setText(R.string.no_data);
         deviceID.setVisibility(View.INVISIBLE);
-        newKey.setVisibility(View.INVISIBLE);
+       // newKey.setVisibility(View.INVISIBLE);
         deviceIDLabel.setVisibility(View.INVISIBLE);
-        newKeyLabel.setVisibility(View.INVISIBLE);
+        //newKeyLabel.setVisibility(View.INVISIBLE);
         configureButton.setVisibility(View.INVISIBLE);
         listServiceButton.setVisibility(View.INVISIBLE);
         changeKeyButton.setVisibility(View.INVISIBLE);
@@ -313,10 +313,10 @@ public class DeviceControlActivity extends Activity {
 
         deviceID = (EditText) findViewById(R.id.deviceID);
         //key = (EditText) findViewById(R.id.key);
-        newKey = (EditText) findViewById(R.id.newkey);
+        //newKey = (EditText) findViewById(R.id.newkey);
         deviceIDLabel = (TextView) findViewById(R.id.deviceIDLabel);
         //keyLabel = (TextView) findViewById(R.id.keyLabel);
-        newKeyLabel = (TextView) findViewById(R.id.NewkeyLabel);
+        //newKeyLabel = (TextView) findViewById(R.id.NewkeyLabel);
         configureButton = (Button) findViewById(R.id.configue_button);
         changeKeyButton = (Button) findViewById(R.id.changekey_button);
         saveButton = (Button) findViewById(R.id.save_button);
@@ -325,8 +325,8 @@ public class DeviceControlActivity extends Activity {
             public void onClick(View v) {
                 deviceID.setVisibility(View.VISIBLE);
                 deviceIDLabel.setVisibility(View.VISIBLE);
-                newKey.setVisibility(View.INVISIBLE);
-                newKeyLabel.setVisibility(View.INVISIBLE);
+                //newKey.setVisibility(View.INVISIBLE);
+               // newKeyLabel.setVisibility(View.INVISIBLE);
                 saveButton.setVisibility(View.VISIBLE);
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
                 changeDeviceID = true;
@@ -358,13 +358,8 @@ public class DeviceControlActivity extends Activity {
         changeKeyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //newKey.setVisibility(View.VISIBLE);
-                //newKeyLabel.setVisibility(View.VISIBLE);
-                //key.setVisibility(View.VISIBLE);
-                //keyLabel.setVisibility(View.VISIBLE);
                 deviceID.setVisibility(View.INVISIBLE);
                 deviceIDLabel.setVisibility(View.INVISIBLE);
-                //saveButton.setVisibility(View.VISIBLE);
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
                 changeDeviceID = false;
                 byte[] key = new byte[16];
@@ -388,22 +383,6 @@ public class DeviceControlActivity extends Activity {
                     setDeviceID(deviceID.getText().toString(),mBluetoothLeService.deviceIDValue);
                     mBluetoothLeService.writeCustomCharacteristic(encryptedDeviceID,SampleGattAttributes.getUUIDForName("deviceID"));
                     //deviceIDValue.setText("");
-                }else{
-                    //byte[] s = newKey.getText().toString().getBytes();
-                    //byte[] ss = mBluetoothLeService.getSessionKey();
-                    //add padding  to key
-                    /*int paddedlength= 0;
-                    String paddedKey = newKey.getText().toString();
-                    if(newKey.getText().length()<16){
-                        paddedlength = 16 - newKey.getText().length();
-                        for(int i =0;i<paddedlength;i++)
-                            paddedKey = paddedKey+ "0";
-                    }*/
-                    byte[] key = new byte[16];
-                    new SecureRandom().nextBytes(key);
-                    byte[] encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
-                    mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
-                    setNewKey(mBluetoothLeService.deviceIDValue,key);
                 }
             }
         });
