@@ -85,6 +85,7 @@ public class DeviceControlActivity extends Activity {
     private EditText mkeyField;
     private String mDeviceName;
     private String mDeviceAddress;
+    private byte[] devID;
     private String username;
     private ExpandableListView mGattServicesList;
     private BluetoothLeService mBluetoothLeService;
@@ -120,14 +121,14 @@ public class DeviceControlActivity extends Activity {
     Toast myToast;
     // Start GATT delay (wait for BLE scan to actually finish)
     private static final long START_GATT_DELAY = 500; // msec
-
+    byte[] encryptednewKey;
+    AES aes;
     private final Handler mStartGattHandler = new Handler();
     private final Runnable mStartGattRunnable = new Runnable() {
         @Override
         public void run() {
             Intent gattServiceIntent = new Intent(DeviceControlActivity.this,
-                    BluetoothLeService.class);
-            bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+                    BluetoothLeService.class);bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
         }
     };
 
@@ -307,7 +308,7 @@ public class DeviceControlActivity extends Activity {
             }
         });
 
-        final AES aes = new AES();
+         aes = new AES();
 
         // Sets up UI references.
 
@@ -345,14 +346,13 @@ public class DeviceControlActivity extends Activity {
                 deviceIDLabel.setVisibility(View.INVISIBLE);
                 //key.setVisibility(View.INVISIBLE);
                 //keyLabel.setVisibility(View.INVISIBLE);
-                newKey.setVisibility(View.INVISIBLE);
-                newKeyLabel.setVisibility(View.INVISIBLE);
+                //newKey.setVisibility(View.INVISIBLE);
+                //newKeyLabel.setVisibility(View.INVISIBLE);
                 saveButton.setVisibility(View.INVISIBLE);
 
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),true);
                 //Intent intent = new Intent(DeviceControlActivity.this,DeviceConfig.class);
                 //startActivity(intent);
-
             }
         });
         changeKeyButton.setOnClickListener(new View.OnClickListener() {
@@ -364,10 +364,9 @@ public class DeviceControlActivity extends Activity {
                 changeDeviceID = false;
                 byte[] key = new byte[16];
                 new SecureRandom().nextBytes(key);
-                byte[] encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
-                mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
-                setNewKey(mBluetoothLeService.deviceIDValue,key);
-                mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("key"));
+                encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
+                devID = mBluetoothLeService.deviceIDValue;
+                setNewKey(devID,key);
 
             }
         });
@@ -379,9 +378,8 @@ public class DeviceControlActivity extends Activity {
             public void onClick(View v) {
                 // mBluetoothLeService.writeCustomCharacteristic(key. getText(). toString().getBytes(),SampleGattAttributes.getUUIDForName("key"));
                 if(changeDeviceID){
-                    byte[] encryptedDeviceID = aes.encryptwihpadding(deviceID.getText().toString().getBytes(),mBluetoothLeService.getSessionKey());
-                    setDeviceID(deviceID.getText().toString(),mBluetoothLeService.deviceIDValue);
-                    mBluetoothLeService.writeCustomCharacteristic(encryptedDeviceID,SampleGattAttributes.getUUIDForName("deviceID"));
+                    devID = mBluetoothLeService.deviceIDValue;
+                    setDeviceID(deviceID.getText().toString(),devID);
                     //deviceIDValue.setText("");
                 }
             }
@@ -584,13 +582,23 @@ public class DeviceControlActivity extends Activity {
                     public void onResponse(JSONObject response) {
                         try {
                             if(response.length() !=0){
-                                String clientDecryptedNonce = (String) response.get("deviceID");
-
+                                String deviceID = (String) response.get("deviceID");
+                                byte[] encryptedDeviceID = aes.encryptwihpadding(deviceID.getBytes(),mBluetoothLeService.getSessionKey());
+                                mBluetoothLeService.writeCustomCharacteristic(encryptedDeviceID,SampleGattAttributes.getUUIDForName("deviceID"));
+                                mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));
                             }else{
                                 myToast = Toast.makeText(DeviceControlActivity.this, "session is finished !", Toast.LENGTH_SHORT);
                                 myToast.show();
                                 final Intent intent = new Intent(DeviceControlActivity.this, MainActivity.class);
                                 startActivity(intent);
+                                mConnected = false;
+                                updateConnectionState(R.string.disconnected);
+                                invalidateOptionsMenu();
+                                clearUI();
+                                unbindService(mServiceConnection);
+                                unregisterReceiver(mPairingRequestReceiver);
+                                //unpairDevice(mBluetoothLeService.getDevice());
+                                mBluetoothLeService = null;
                             }
                         } catch (Exception e) {
 
@@ -644,9 +652,13 @@ public class DeviceControlActivity extends Activity {
                     public void onResponse(JSONObject response) {
                         try {
                             if(response!=null){
-
+                                mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
+                                mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("key"));
                             }else{
-
+                                myToast = Toast.makeText(DeviceControlActivity.this, "session is finished !", Toast.LENGTH_SHORT);
+                                myToast.show();
+                                //final Intent intent = new Intent(DeviceControlActivity.this, MainActivity.class);
+                                //startActivity(intent);
                             }
                         } catch (Exception e) {
                             e.printStackTrace();

@@ -290,9 +290,11 @@ public class BluetoothLeService extends Service {
                                 if (Arrays.equals(orginalCnonce, clientDecryptedNonceBytes)) {
                                     System.out.println("client are sure about the server is real one");
                                     verifyserver = true;                                    //mBluetoothGatt.disconnect();
-                                    //byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length];
+                                    //byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length+encryptedServerNonceBytes.length];
                                     //System.arraycopy(serverDecryptedNonceBytes, 0, concatenatednonces, 0, serverDecryptedNonceBytes.length);
                                     //System.arraycopy( encryptedSessionKeyBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length,  encryptedSessionKeyBytes.length);
+                                    //System.arraycopy( encryptedServerNonceBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length+encryptedSessionKeyBytes.length,  encryptedServerNonceBytes.length);
+                                    //writeCustomCharacteristic(serverDecryptedNonceBytes, SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"));
                                     writeCustomCharacteristic(serverDecryptedNonceBytes, SampleGattAttributes.getUUIDForName("GattServerNonce"));
                                     writeCustomCharacteristic(encryptedSessionKeyBytes, SampleGattAttributes.getUUIDForName("sessionKey"));
                                     writeCustomCharacteristic(encryptedServerNonceBytes, SampleGattAttributes.getUUIDForName("restServerNonce"));
@@ -429,7 +431,7 @@ public class BluetoothLeService extends Service {
             Log.d(TAG, "Trying to use an existing mBluetoothGatt for connection.");
             if (mBluetoothGatt.connect()) {
                 mConnectionState = STATE_CONNECTING;
-                boolean MTU = mBluetoothGatt.requestMtu(512);
+                //boolean MTU = mBluetoothGatt.requestMtu(512);
                 return true;
             } else {
                 return false;
@@ -449,7 +451,7 @@ public class BluetoothLeService extends Service {
         //there is an already bond 10
        // if(bond==10)
         //device.createBond();
-        //boolean MTU = mBluetoothGatt.requestMtu(512);
+        //mBluetoothGatt.requestMtu(48);
 
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
@@ -510,6 +512,8 @@ public class BluetoothLeService extends Service {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter not initialized");
         }
+        //mBluetoothGatt.requestMtu(48);
+
         /*check if the service is available on the device*/
         BluetoothGattService mCustomService = mBluetoothGatt.getService(SampleGattAttributes.getUUIDForName("SecurityService"));
         if(mCustomService == null){
@@ -703,12 +707,7 @@ public class BluetoothLeService extends Service {
         if(uuid.equals(SampleGattAttributes.getUUIDForName("clientNonce"))) {
             orginalCnonce = value;
             //mWriteCharacteristic.setWriteType(1);
-          //  System.out.println("Cnonce" + orginalCnonce.toString());
         }
-        //System.out.println("Client nonces........................kkkkkkkkk......................................");
-        //if(mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false){
-          // Log.w(TAG, "Failed to write characteristic");
-        //}
         // Enqueue the write command now that all checks have been passed
         boolean result = commandQueue.add(new Runnable() {
 
