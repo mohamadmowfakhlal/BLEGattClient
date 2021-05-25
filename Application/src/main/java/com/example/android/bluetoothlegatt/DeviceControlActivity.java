@@ -62,6 +62,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.crypto.spec.SecretKeySpec;
+
 
 /**
  * For a given BLE device, this Activity provides the user interface to connect, display data,
@@ -298,18 +300,23 @@ public class DeviceControlActivity extends Activity {
         mGattServicesList.setOnChildClickListener(servicesListClickListner);
         // Sets up UI references.
 
+        aes = new AES();
         mDataField = (TextView) findViewById(R.id.data_value);
         writeButton = (Button) findViewById(R.id.test_button);
         writeButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // your handler code here
+                String keyString = "theKeyImUsing";
+                SecretKeySpec macKey = new SecretKeySpec(mBluetoothLeService.getSessionKey(), "HmacMD5");
+                aes.initMAC(macKey);
+                byte[] a = "changeo2level".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                //aes.calculateMAC("Hello1Hello2".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                 //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("realData"),"configurationservice");
-                mBluetoothLeService.writeCustomCharacteristic("Hello".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("realData"),"TimeService");
+                mBluetoothLeService.writeCustomCharacteristic(a,SampleGattAttributes.getUUIDForName("realData"),"SecurityService");
+                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC("changeo2level".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)),SampleGattAttributes.getUUIDForName("MAC"),"SecurityService");
+
             }
         });
-
-         aes = new AES();
-
         // Sets up UI references.
 
         deviceID = (EditText) findViewById(R.id.deviceID);
@@ -595,10 +602,7 @@ public class DeviceControlActivity extends Activity {
                                 updateConnectionState(R.string.disconnected);
                                 invalidateOptionsMenu();
                                 clearUI();
-                                unbindService(mServiceConnection);
-                                unregisterReceiver(mPairingRequestReceiver);
-                                //unpairDevice(mBluetoothLeService.getDevice());
-                                mBluetoothLeService = null;
+                                onDestroy();
                             }
                         } catch (Exception e) {
 

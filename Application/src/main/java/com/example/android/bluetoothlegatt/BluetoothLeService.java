@@ -101,6 +101,10 @@ public class BluetoothLeService extends Service {
     boolean verifyserver = false;
     Toast myToast;
 
+    public byte[] getsessionKey() {
+        return sessionKey;
+    }
+
     private byte[] sessionKey;
     private final Queue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
     private boolean commandQueueBusy;
@@ -135,6 +139,8 @@ public class BluetoothLeService extends Service {
                 // Attempts to discover services after successful connection.
                 Log.i(TAG, "Attempting to start service discovery:" +
                         mBluetoothGatt.discoverServices());
+                //mBluetoothGatt.requestMtu(50);
+
 
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
@@ -451,7 +457,7 @@ public class BluetoothLeService extends Service {
         //there is an already bond 10
        // if(bond==10)
         //device.createBond();
-        //mBluetoothGatt.requestMtu(48);
+        //mBluetoothGatt.requestMtu(256);
 
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
@@ -665,7 +671,7 @@ public class BluetoothLeService extends Service {
                     Log.e(TAG, String.format("ERROR: readCharacteristic failed for characteristic: %s", mWriteCharacteristic.getUuid()));
                     completedCommand();
                 } else {
-                    Log.d(TAG, String.format("reading characteristic <%s>", mWriteCharacteristic.getUuid()));
+                    Log.d(TAG, String.format("writing  characteristic <%s>", mWriteCharacteristic.getUuid()));
                     nrTries++;
                 }
             }
@@ -699,6 +705,7 @@ public class BluetoothLeService extends Service {
         final  BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(uuid);
 
         if(sessionKey!=null && uuid.equals(SampleGattAttributes.getUUIDForName("realData"))){
+
             value = aes.encryptwihpadding(value,sessionKey);
         }
 
@@ -717,7 +724,7 @@ public class BluetoothLeService extends Service {
                     Log.e(TAG, String.format("ERROR: readCharacteristic failed for characteristic: %s", mWriteCharacteristic.getUuid()));
                     completedCommand();
                 } else {
-                    Log.d(TAG, String.format("reading characteristic <%s>", mWriteCharacteristic.getUuid()));
+                    Log.d(TAG, String.format("writinging characteristic <%s>", mWriteCharacteristic.getUuid()));
                     nrTries++;
                 }
             }

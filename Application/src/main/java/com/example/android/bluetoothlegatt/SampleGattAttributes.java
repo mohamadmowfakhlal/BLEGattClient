@@ -30,7 +30,7 @@ public class SampleGattAttributes {
         return serverURL;
     }
 
-    private static  String serverURL = "http://ec2-3-67-192-176.eu-central-1.compute.amazonaws.com";
+    private static  String serverURL = "http://ec2-35-159-49-190.eu-central-1.compute.amazonaws.com";
 
     static {
         attributes.put("fb340001-8000-0080-0010-00000d180000", "SecurityService");
@@ -39,8 +39,9 @@ public class SampleGattAttributes {
         attributes.put("fb340004-8000-0080-0010-00000d180000", "GattServerNonce");
         attributes.put("fb340003-8000-0080-0010-00000d180000", "clientNonce");
         attributes.put("fb340005-8000-0080-0010-00000d180000","sessionKey");
+        attributes.put("fb340008-8000-0080-0010-00000d180000","MAC");
         attributes.put("fb340006-8000-0080-0010-00000d180000","restServerNonce");
-        attributes.put("00002901-0000-1000-8000-00805f9b34fb","realData");
+        attributes.put("fb340010-8000-0080-0010-00000d180000","realData");
         attributes.put("fb340009-8000-0080-0010-00000d180000","deviceID");
         attributes.put("fb340002-8000-0080-0010-00000d180000","key");
         attributes.put("fb340007-8000-0080-0010-00000d180000","GattSessionRestServerNonce");
