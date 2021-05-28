@@ -137,8 +137,7 @@ public class BluetoothLeService extends Service {
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:" +
-                        mBluetoothGatt.discoverServices());
+                Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
                 //mBluetoothGatt.requestMtu(50);
 
 
@@ -154,6 +153,7 @@ public class BluetoothLeService extends Service {
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             if (status == GATT_SUCCESS) {
                broadcastUpdate(ACTION_GATT_SERVICES_DISCOVERED);
+                boolean res = mBluetoothGatt.requestMtu(35);
             } else {
                 Log.w(TAG, "onServicesDiscovered received: " + status);
             }
@@ -457,8 +457,7 @@ public class BluetoothLeService extends Service {
         //there is an already bond 10
        // if(bond==10)
         //device.createBond();
-        //mBluetoothGatt.requestMtu(256);
-
+        //boolean res = mBluetoothGatt.requestMtu(100);
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;

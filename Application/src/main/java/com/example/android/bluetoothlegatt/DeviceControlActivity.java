@@ -225,6 +225,7 @@ public class DeviceControlActivity extends Activity {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
+
                 establishSecureConnection();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
@@ -309,11 +310,11 @@ public class DeviceControlActivity extends Activity {
                 String keyString = "theKeyImUsing";
                 SecretKeySpec macKey = new SecretKeySpec(mBluetoothLeService.getSessionKey(), "HmacMD5");
                 aes.initMAC(macKey);
-                byte[] a = "changeo2level".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                byte[] a = "changeo2levelchangeo2levellevel".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                 //aes.calculateMAC("Hello1Hello2".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1));
                 //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("realData"),"configurationservice");
                 mBluetoothLeService.writeCustomCharacteristic(a,SampleGattAttributes.getUUIDForName("realData"),"SecurityService");
-                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC("changeo2level".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)),SampleGattAttributes.getUUIDForName("MAC"),"SecurityService");
+                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC("changeo2levelchangeo2leve".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)),SampleGattAttributes.getUUIDForName("MAC"),"SecurityService");
 
             }
         });
