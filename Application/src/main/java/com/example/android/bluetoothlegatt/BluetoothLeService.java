@@ -46,6 +46,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -92,7 +93,8 @@ public class BluetoothLeService extends Service {
     Nonces nonce = new Nonces();
     AES aes = new AES();
     public byte[] deviceIDValue;
-
+    public String deviceAddress;
+    public String sessionNumber;
     public void setUsername(String username) {
         this.username = username;
     }
@@ -101,9 +103,6 @@ public class BluetoothLeService extends Service {
     boolean verifyserver = false;
     Toast myToast;
 
-    public byte[] getsessionKey() {
-        return sessionKey;
-    }
 
     private byte[] sessionKey;
     private final Queue<Runnable> commandQueue = new ConcurrentLinkedQueue<>();
@@ -134,10 +133,11 @@ public class BluetoothLeService extends Service {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 intentAction = ACTION_GATT_CONNECTED;
                 mConnectionState = STATE_CONNECTED;
+                deviceAddress = mBluetoothGatt.getDevice().getAddress();
                 broadcastUpdate(intentAction);
                 Log.i(TAG, "Connected to GATT server.");
                 // Attempts to discover services after successful connection.
-                Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices());
+                Log.i(TAG, "Attempting to start service discovery:" + mBluetoothGatt.discoverServices()+mBluetoothGatt.getDevice());
                 //mBluetoothGatt.requestMtu(50);
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 intentAction = ACTION_GATT_DISCONNECTED;
@@ -195,7 +195,7 @@ public class BluetoothLeService extends Service {
                                          int status) {
             if (status == GATT_SUCCESS)
             {
-                    if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("MAC"))) {
+                    if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"))) {
                     byte[] encryptedServerNonce = new byte[16];
                     byte[] encryptedClientNonce = new byte[16];
                     byte[] deviceID = new byte[characteristic.getValue().length-32];
@@ -213,6 +213,13 @@ public class BluetoothLeService extends Service {
                     if(Arrays.equals(serverNonce, aes.decrypt(characteristic.getValue(),sessionKey)))
                         System.out.println("correct session and protection against reply attack");
                 }
+            if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("sessionNumber"))) {
+                    //sessionNumber = new String(characteristic.getValue(),java.nio.charset.StandardCharsets.ISO_8859_1);
+                    System.out.println("correct session number");
+                    long stopTime = System.currentTimeMillis();
+                    System.out.println("stoptime"+stopTime);
+
+            }
                   broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
             } else if (status == BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION) {
                 // This is where the tricky part comes
@@ -285,15 +292,18 @@ public class BluetoothLeService extends Service {
                                 if (Arrays.equals(orginalCnonce, clientDecryptedNonceBytes)) {
                                     System.out.println("client are sure about the server is real one");
                                     verifyserver = true;                                    //mBluetoothGatt.disconnect();
-                                    byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length+encryptedServerNonceBytes.length];
+                                    byte[] concatenatednonces = new byte[serverDecryptedNonceBytes.length + encryptedSessionKeyBytes.length+encryptedServerNonceBytes.length+deviceAddress.length()];
                                     System.arraycopy(serverDecryptedNonceBytes, 0, concatenatednonces, 0, serverDecryptedNonceBytes.length);
                                     System.arraycopy( encryptedSessionKeyBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length,  encryptedSessionKeyBytes.length);
-                                    System.arraycopy( encryptedServerNonceBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length+encryptedSessionKeyBytes.length,  encryptedServerNonceBytes.length);
-                                    writeCustomCharacteristic(concatenatednonces, SampleGattAttributes.getUUIDForName("MAC"));
+                                    //System.arraycopy( encryptedServerNonceBytes, 0, concatenatednonces, serverDecryptedNonceBytes.length+encryptedSessionKeyBytes.length,  encryptedServerNonceBytes.length);
+                                    //System.arraycopy( deviceAddress.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1), 0, concatenatednonces, serverDecryptedNonceBytes.length+encryptedSessionKeyBytes.length+encryptedServerNonceBytes.length,  mBluetoothGatt.getDevice().getAddress().length());
+                                    writeCustomCharacteristic(concatenatednonces, SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"));
                                    //writeCustomCharacteristic(serverDecryptedNonceBytes, SampleGattAttributes.getUUIDForName("GattServerNonce"));
                                    //writeCustomCharacteristic(encryptedSessionKeyBytes, SampleGattAttributes.getUUIDForName("sessionKey"));
                                    //writeCustomCharacteristic(encryptedServerNonceBytes, SampleGattAttributes.getUUIDForName("restServerNonce"));
-                                    readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("restServerNonce"));
+                                    //readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("restServerNonce"));
+                                    //readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("sessionNumber"));
+
                                 } else {
                                     mBluetoothGatt.disconnect();
                                 }

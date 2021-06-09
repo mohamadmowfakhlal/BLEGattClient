@@ -30,7 +30,7 @@ public class SampleGattAttributes {
         return serverURL;
     }
 
-    private static  String serverURL = "http://ec2-18-195-61-201.eu-central-1.compute.amazonaws.com";
+    private static  String serverURL = "http://ec2-3-122-252-251.eu-central-1.compute.amazonaws.com";
 
     static {
         attributes.put("00001805-0000-1000-8000-00805f9b34fb","TimeService");
@@ -41,11 +41,13 @@ public class SampleGattAttributes {
         attributes.put("fb340004-8000-0080-0010-00000d180000", "GattServerNonce");
         attributes.put("fb340005-8000-0080-0010-00000d180000","MAC1");
         attributes.put("fb340006-8000-0080-0010-00000d180000","restServerNonce");
-        attributes.put("fb340007-8000-0080-0010-00000d180000","GattSessionRestServerNonce");
-        attributes.put("fb340008-8000-0080-0010-00000d180000","MAC");
+        attributes.put("fb340007-8000-0080-0010-00000d180000","sessionNumber");
+        attributes.put("fb340008-8000-0080-0010-00000d180000","GattSessionRestServerNonce");
         attributes.put("fb340009-8000-0080-0010-00000d180000","deviceID");
         attributes.put("fb340010-8000-0080-0010-00000d180000","realData");
-        //attributes.put("fb340010-8000-0080-0010-00000d180000","newKey");
+
+       // public static final UUID GattSessionRestServerNonce_UUID = UUID.fromString("fb340008-8000-0080-0010-00000d180000");
+
     }
     public static String lookup(String uuid, String defaultName) {
         String name = attributes.get(uuid);

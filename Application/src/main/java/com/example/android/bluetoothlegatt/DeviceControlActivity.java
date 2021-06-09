@@ -56,6 +56,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -217,7 +218,8 @@ public class DeviceControlActivity extends Activity {
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),false);
-
+                long startTime = System.currentTimeMillis();
+                System.out.println("startTime"+startTime);
                 establishSecureConnection();
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
@@ -301,13 +303,12 @@ public class DeviceControlActivity extends Activity {
                 // your handler code here
                 SecretKeySpec macKey = new SecretKeySpec(mBluetoothLeService.getSessionKey(), "HmacMD5");
                 aes.initMAC(macKey);
-                byte[] a = "changeo2levelchangeo2leve".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
-                mBluetoothLeService.writeCustomCharacteristic(a,SampleGattAttributes.getUUIDForName("realData"),"SecurityService");
-                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC("changeo2levelchangeo2leve".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1)),SampleGattAttributes.getUUIDForName("MAC1"),"SecurityService");
-
+                byte[] data = "changeo2levelchangeo2leve".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
+                //mBluetoothLeService.writeCustomCharacteristic(mBluetoothLeService.sessionNumber.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("sessionNumber"),"SecurityService");
+                mBluetoothLeService.writeCustomCharacteristic(data,SampleGattAttributes.getUUIDForName("realData"),"SecurityService");
+                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC(data),SampleGattAttributes.getUUIDForName("MAC1"),"SecurityService");
             }
         });
-        // Sets up UI references.
 
         deviceID = (EditText) findViewById(R.id.deviceID);
         deviceIDLabel = (TextView) findViewById(R.id.deviceIDLabel);
@@ -333,7 +334,6 @@ public class DeviceControlActivity extends Activity {
                 deviceID.setVisibility(View.INVISIBLE);
                 deviceIDLabel.setVisibility(View.INVISIBLE);
                 saveButton.setVisibility(View.INVISIBLE);
-
                 displayGattServices(mBluetoothLeService.getSupportedGattServices(),true);
                 //startActivity(intent);
             }
@@ -350,7 +350,6 @@ public class DeviceControlActivity extends Activity {
                 encryptednewKey = aes.encrypt(key,mBluetoothLeService.getSessionKey());
                 devID = mBluetoothLeService.deviceIDValue;
                 setNewKey(devID,key);
-
             }
         });
 
@@ -536,7 +535,7 @@ public class DeviceControlActivity extends Activity {
         byte[] Cnonce = new byte[16];
         new SecureRandom().nextBytes(Cnonce);
         mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonce"));
-        mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("MAC"));
+        mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"));
         //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("clientNonce"));
         //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));
         //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("GattServerNonce"));
@@ -566,6 +565,7 @@ public class DeviceControlActivity extends Activity {
                             if(response.length() !=0){
                                 String deviceID = (String) response.get("deviceID");
                                 byte[] encryptedDeviceID = aes.encryptwihpadding(deviceID.getBytes(),mBluetoothLeService.getSessionKey());
+                                //mBluetoothLeService.writeCustomCharacteristic(mBluetoothLeService.sessionNumber.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("sessionNumber"),"SecurityService");
                                 mBluetoothLeService.writeCustomCharacteristic(encryptedDeviceID,SampleGattAttributes.getUUIDForName("deviceID"));
                                 mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));
                             }else{
@@ -631,6 +631,7 @@ public class DeviceControlActivity extends Activity {
                     public void onResponse(JSONObject response) {
                         try {
                             if(response!=null){
+                                //mBluetoothLeService.writeCustomCharacteristic(mBluetoothLeService.sessionNumber.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("sessionNumber"),"SecurityService");
                                 mBluetoothLeService.writeCustomCharacteristic(encryptednewKey,SampleGattAttributes.getUUIDForName("key"));
                                 //key must not read as it transfer in plaintext next line should be commented
                                 mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("key"));
