@@ -306,7 +306,7 @@ public class DeviceControlActivity extends Activity {
                 byte[] data = "changeo2levelchangeo2leve".getBytes(java.nio.charset.StandardCharsets.ISO_8859_1);
                 //mBluetoothLeService.writeCustomCharacteristic(mBluetoothLeService.sessionNumber.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1),SampleGattAttributes.getUUIDForName("sessionNumber"),"SecurityService");
                 mBluetoothLeService.writeCustomCharacteristic(data,SampleGattAttributes.getUUIDForName("realData"),"SecurityService");
-                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC(data),SampleGattAttributes.getUUIDForName("MAC1"),"SecurityService");
+                mBluetoothLeService.writeCustomCharacteristic(aes.calculateMAC(data),SampleGattAttributes.getUUIDForName("MAC"),"SecurityService");
             }
         });
 
