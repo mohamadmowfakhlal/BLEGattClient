@@ -163,6 +163,10 @@ public class BluetoothLeService extends Service {
 
             if (status == GATT_SUCCESS) {
             System.out.println("GATT SUCCESS");
+                if(characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"))){
+                    long stopTime = System.currentTimeMillis();
+                    System.out.println("stoptime"+stopTime);
+                }
             }else if (status == BluetoothGatt.GATT_INSUFFICIENT_AUTHENTICATION) {
                 // This is where the tricky part comes
                 if (gatt.getDevice().getBondState() == BluetoothDevice.BOND_NONE) {
@@ -212,8 +216,7 @@ public class BluetoothLeService extends Service {
             if (characteristic.getUuid().equals(SampleGattAttributes.getUUIDForName("sessionNumber"))) {
                     //sessionNumber = new String(characteristic.getValue(),java.nio.charset.StandardCharsets.ISO_8859_1);
                     System.out.println("correct session number");
-                    long stopTime = System.currentTimeMillis();
-                    System.out.println("stoptime"+stopTime);
+
 
             }
                   broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic);
