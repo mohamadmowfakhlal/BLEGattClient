@@ -32,6 +32,8 @@
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService$5.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService$5.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService$LocalBinder.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService$LocalBinder.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/BluetoothLeService.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/DeviceControlActivity.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/DeviceControlActivity.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/FirstFragment$1.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/FirstFragment$1.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/SampleGattAttributes.class" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/javac/debug/classes/com/example/android/bluetoothlegatt/SampleGattAttributes.class" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$1$1.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$1$1.dex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$1$2.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$1$2.dex" afterDir="false" />
@@ -43,9 +45,13 @@
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$5.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$5.dex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$LocalBinder.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService$LocalBinder.dex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/BluetoothLeService.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/DeviceControlActivity.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/DeviceControlActivity.dex" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/FirstFragment$1.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/FirstFragment$1.dex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/SampleGattAttributes.dex" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/intermediates/project_dex_archive/debug/out/com/example/android/bluetoothlegatt/SampleGattAttributes.dex" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/build/outputs/apk/debug/Application-debug.apk" beforeDir="false" afterPath="$PROJECT_DIR$/Application/build/outputs/apk/debug/Application-debug.apk" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/BluetoothLeService.java" beforeDir="false" afterPath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/BluetoothLeService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/DeviceControlActivity.java" beforeDir="false" afterPath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/DeviceControlActivity.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/FirstFragment.java" beforeDir="false" afterPath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/FirstFragment.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/SampleGattAttributes.java" beforeDir="false" afterPath="$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/SampleGattAttributes.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -96,12 +102,12 @@
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="DeviceAndSnapshotComboBoxAction.selectedDevice" value="5200a6305b1c1573" />
-    <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2021-06-15T08:55:55.979Z" />
+    <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2021-06-18T13:45:19.495Z" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="android.sdk.path" value="$USER_HOME$/AppData/Local/Android/Sdk" />
     <property name="extract.method.default.visibility" value="private" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../sample-bluetooth-le-gattserver-master/java" />
   </component>
   <component name="RecentsManager">
     <key name="CopyClassDialog.RECENTS_KEY">
@@ -290,42 +296,42 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="662" y="178" key="AndroidProcessChooserDialog/0.0.1536.824@0.0.1536.824" timestamp="1621770032127" />
-    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1623849896073">
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1624092427947">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1623849896073" />
-    <state width="1491" height="224" key="GridCell.Tab.0.bottom" timestamp="1623874454978">
+    <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1624092427947" />
+    <state width="1491" height="224" key="GridCell.Tab.0.bottom" timestamp="1624023929864">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.0.center" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1624023929864" />
+    <state width="1491" height="224" key="GridCell.Tab.0.center" timestamp="1624023929864">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.0.left" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1624023929864" />
+    <state width="1491" height="224" key="GridCell.Tab.0.left" timestamp="1624023929863">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.0.right" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1624023929863" />
+    <state width="1491" height="224" key="GridCell.Tab.0.right" timestamp="1624023929864">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.1.bottom" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1624023929864" />
+    <state width="1491" height="224" key="GridCell.Tab.1.bottom" timestamp="1624023915219">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.1.center" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.1.bottom/0.0.1536.824@0.0.1536.824" timestamp="1624023915219" />
+    <state width="1491" height="224" key="GridCell.Tab.1.center" timestamp="1624023915219">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.1.left" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.1.center/0.0.1536.824@0.0.1536.824" timestamp="1624023915219" />
+    <state width="1491" height="224" key="GridCell.Tab.1.left" timestamp="1624023915218">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
-    <state width="1491" height="224" key="GridCell.Tab.1.right" timestamp="1623874454978">
+    <state width="1491" height="224" key="GridCell.Tab.1.left/0.0.1536.824@0.0.1536.824" timestamp="1624023915218" />
+    <state width="1491" height="224" key="GridCell.Tab.1.right" timestamp="1624023915219">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state width="1491" height="224" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1623874454978" />
+    <state width="1491" height="224" key="GridCell.Tab.1.right/0.0.1536.824@0.0.1536.824" timestamp="1624023915219" />
     <state x="314" y="111" width="782" height="601" key="NewModule_or_Project.wizard" timestamp="1615797460028">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -334,10 +340,10 @@
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="93" y="93" width="1350" height="638" maximized="true" key="com.intellij.history.integration.ui.views.FileHistoryDialog/0.0.1536.824@0.0.1536.824" timestamp="1623947232503" />
-    <state x="387" y="238" key="com.intellij.ide.util.TipDialog" timestamp="1623849884157">
+    <state x="387" y="238" key="com.intellij.ide.util.TipDialog" timestamp="1624000498625">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="387" y="238" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1623849884157" />
+    <state x="387" y="238" key="com.intellij.ide.util.TipDialog/0.0.1536.824@0.0.1536.824" timestamp="1624000498625" />
     <state x="499" y="182" key="extract.method.dialog" timestamp="1618778298104">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
@@ -366,6 +372,11 @@
           <url>file://$USER_HOME$/AppData/Local/Android/Sdk/sources/android-28/android/bluetooth/BluetoothGatt.java</url>
           <line>1472</line>
           <option name="timeStamp" value="135" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="java-line">
+          <url>file://$PROJECT_DIR$/Application/src/main/java/com/example/android/bluetoothlegatt/BluetoothLeService.java</url>
+          <line>274</line>
+          <option name="timeStamp" value="138" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

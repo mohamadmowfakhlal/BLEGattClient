@@ -534,7 +534,7 @@ public class DeviceControlActivity extends Activity {
     public void establishSecureConnection() {
         byte[] Cnonce = new byte[16];
         new SecureRandom().nextBytes(Cnonce);
-        mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonce"));
+        //mBluetoothLeService.writeCustomCharacteristic(Cnonce,SampleGattAttributes.getUUIDForName("clientNonce"));
         mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("GattSessionRestServerNonce"));
         //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("clientNonce"));
         //mBluetoothLeService.readCustomCharacteristicForService(SampleGattAttributes.getUUIDForName("deviceID"));

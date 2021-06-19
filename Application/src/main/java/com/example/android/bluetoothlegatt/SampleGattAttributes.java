@@ -30,7 +30,7 @@ public class SampleGattAttributes {
         return serverURL;
     }
 
-    private static  String serverURL = "http://ec2-3-122-228-173.eu-central-1.compute.amazonaws.com";
+    private static  String serverURL = "http://ec2-3-121-22-179.eu-central-1.compute.amazonaws.com";
 
     static {
         attributes.put("00001805-0000-1000-8000-00805f9b34fb","TimeService");

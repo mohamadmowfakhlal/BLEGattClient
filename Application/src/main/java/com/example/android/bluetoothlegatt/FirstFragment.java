@@ -73,7 +73,7 @@ public class FirstFragment extends Fragment {
                 }
                 // Make request for JSONObject
                 JsonObjectRequest jsonObjReq = new JsonObjectRequest(
-                        Request.Method.POST, serverURL+"/checkauthentication/", js,
+                        Request.Method.POST, serverURL+"/authentication/", js,
                         new Response.Listener<JSONObject>() {
                             @Override
                             public void onResponse(JSONObject response) {
